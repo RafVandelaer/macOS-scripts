@@ -47,6 +47,11 @@ logging () {
 # comment out or delete line 221-228 and edit the Jamf notifications at the end.
 #
 # Changelog
+# March 25, 2024
+# - Modified (find) to mdfind commando to make the script faster
+# - Modified logging to a central function
+# - Removed backup function for fast working.
+#	
 # January 26, 2020
 # - Fixed numerical conditionals in while loops and file number comparisons, corrected quoting.
 #
