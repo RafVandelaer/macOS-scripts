@@ -35,7 +35,7 @@ fixdate="$(date +%d%m%Y-%H:%M)"
 
 # Check if the OneDrive folder is present
 
-if [ -d $oneDriveFolder ]; then
+if [ -d "$oneDriveFolder" ]; then
     logging "User has configured OneDrive."
 else
 	logging "User hasn't set up OneDrive, aborting."
