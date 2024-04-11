@@ -1,10 +1,10 @@
 #!/bin/bash
 ########################################################################################################################
-############																								############
-############    This is a basic template to use installomator. Checking if installomator is installed   	############
-############	If not installed, it will install the script in /usr/local/									############
-############	The script wil create a log in /var/log/xxxx.log with the name of the package				############
-############																								############
+############																								
+############    This is a basic template to use installomator. Checking if installomator is installed   	
+############	If not installed, it will install the script in /usr/local/									
+############	The script wil create a log in /var/log/xxxx.log with the name of the package				
+############																								
 ########################################################################################################################
 
 
