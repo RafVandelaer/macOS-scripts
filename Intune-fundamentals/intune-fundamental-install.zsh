@@ -64,6 +64,7 @@ installApp(){
 #base vars
 logFolder="/private/var/log/intune"
 [[ -d $logFolder ]] || mkdir $logFolder
+chmod 775 $logFolder
 fixlog=$logFolder"/intune-fundamentals-install.log"
 touch $fixlog
 readonly fixlog
