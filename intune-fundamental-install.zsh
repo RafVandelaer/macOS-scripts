@@ -22,14 +22,14 @@ main() {
 		logging "Dockutil installed and ready"
 	else 
         logging "Installing Dockutil"
-	    installApp "Dockutil" "https://api.github.com/repos/kcrawford/dockutil/releases/latest" "/usr/local/bin/"
+	    installApp "Dockutil" "https://api.github.com/repos/kcrawford/dockutil/releases/latest"
 	fi
     # Installs the latest release of Desktoppr from Github
     if [[ -f "/usr/local/bin/desktoppr" ]]; then
 		logging "Desktoppr installed and ready"
 	else 
         logging "Installing Desktoppr"
-	    installApp "Desktoppr" "https://api.github.com/repos/scriptingosx/desktoppr/releases/latest" "/usr/local/bin/"
+	    installApp "Desktoppr" "https://api.github.com/repos/scriptingosx/desktoppr/releases/latest"
 	fi
     # Installs the latest release of Desktoppr from Github
     if [ -f "/usr/local/Installomator/Installomator.sh" ]; then
