@@ -22,14 +22,21 @@ main() {
 		logging "Dockutil installed and ready"
 	else 
         logging "Installing Dockutil"
-	    installApp "Dockutil" "https://api.github.com/repos/kcrawford/dockutil/releases/latest"
+	    installApp "Dockutil" "https://api.github.com/repos/kcrawford/dockutil/releases/latest" "/usr/local/bin/"
 	fi
     # Installs the latest release of Desktoppr from Github
     if [[ -f "/usr/local/bin/desktoppr" ]]; then
 		logging "Desktoppr installed and ready"
 	else 
         logging "Installing Desktoppr"
-	    installApp "Desktoppr" "https://api.github.com/repos/scriptingosx/desktoppr/releases/latest"
+	    installApp "Desktoppr" "https://api.github.com/repos/scriptingosx/desktoppr/releases/latest" "/usr/local/bin/"
+	fi
+    # Installs the latest release of Desktoppr from Github
+    if [ -f "/usr/local/Installomator/Installomator.sh" ]; then
+		logging "installomator installed and ready"
+	else 
+        logging "Installing installomator"
+	    installApp "Installomator" "https://api.github.com/repos/Installomator/Installomator/releases/latest"
 	fi
 }
 
@@ -64,7 +71,7 @@ installDockutil(){
     | xargs curl -SL --output /tmp/$APP.pkg
     
     # Install PKG to root volume
-    installer -pkg /tmp/$APP.pkg -target /
+    installer -pkg /tmp/$APP.pkg -target $3
     
     # Cleanup
     rm /tmp/$APP.pkg
