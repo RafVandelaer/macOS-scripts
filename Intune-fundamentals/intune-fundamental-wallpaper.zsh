@@ -3,18 +3,17 @@
 #############################################################################################################
 #                                      Created by Raf Vandelaer                                             #
 #                                                                                                           #
-#                    #script to configure the macOS wallpaper run as following                              #
-#                       #Run script as signed-in user : Yes                                                 #
-#                       #Hide script notifications on devices : Yes                                         #
-#                       #Script frequency : Not Configured (so it only runs once)                           #
-#                       #Number of times to retry if script fails : 3                                       #
+#                    script to configure the macOS wallpaper run as following                               #
+#                       Run script as signed-in user : Yes                                                  #
+#                       Hide script notifications on devices : Yes                                          #
+#                       Script frequency : Not Configured (so it only runs once)                            #
+#                       Number of times to retry if script fails : 3                                        #
 #                                                                                                           #
-#                   #Logs can be found in /private/var/log/intune                                           #
 #                                                                                                           #
 #############################################################################################################
 
-#change the following path to the file which you added
-wallpaper="/Users/Shared/wallpaper.jpg"
+#Change the following path to the file which you added in a pkg LOB
+wallpaper="/Users/Shared/wallpaper.png"
 
 #############################################################################################################
 
