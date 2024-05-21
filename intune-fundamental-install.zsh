@@ -61,23 +61,6 @@ installApp(){
     rm /tmp/$APP.pkg
 
 }
-
-
-installDockutil(){
-    APP=dockutil
-    # Download latest release PKG from Github
-    curl -s https://api.github.com/repos/kcrawford/dockutil/releases/latest \
-    | grep "https*.*pkg" | cut -d : -f 2,3 | tr -d \" \
-    | xargs curl -SL --output /tmp/$APP.pkg
-    
-    # Install PKG to root volume
-    installer -pkg /tmp/$APP.pkg -target $3
-    
-    # Cleanup
-    rm /tmp/$APP.pkg
-
-}
-
 #base vars
 logFolder="/private/var/log/intune"
 [[ -d $logFolder ]] || mkdir $logFolder
