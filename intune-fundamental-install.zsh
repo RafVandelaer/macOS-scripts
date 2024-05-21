@@ -1,11 +1,18 @@
 #!/bin/zsh
-#script to install the third party tools in Intune, config as follows:
-    #Run script as signed-in user : No
-    #Hide script notifications on devices : Yes
-    #Script frequency : Not Configured (so it only runs once)
-    #Number of times to retry if script fails : 3
 
-#Logs can be found in /private/var/log/intune
+#############################################################################################################
+#                                      Created by Raf Vandelaer                                             #
+#                                                                                                           #
+#                    #script to install the third party tools in Intune, config as follows:                 #
+#                       #Run script as signed-in user : No                                                  #
+#                       #Hide script notifications on devices : Yes                                         #
+#                       #Script frequency : Not Configured (so it only runs once)                           #
+#                       #Number of times to retry if script fails : 3                                       #
+#                                                                                                           #
+#                   #Logs can be found in /private/var/log/intune                                           #
+#                                                                                                           #
+#############################################################################################################
+
 
 main() {
     #Main function of this script
