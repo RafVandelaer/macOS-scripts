@@ -49,7 +49,9 @@ installApp(){
     | grep "https*.*pkg" | cut -d : -f 2,3 | tr -d \" \
     | xargs curl -SL --output /tmp/$APP.pkg
     # Install PKG to root volume
-    installer -pkg /tmp/$APP.pkg -target /
+    #TODO; install in user location so it can be run without root
+    installer -pkg /tmp/$APP.pkg -target "/usr/local"
+    #installer -pkg /tmp/$APP.pkg -target /
     # Cleanup
     rm /tmp/$APP.pkg
 

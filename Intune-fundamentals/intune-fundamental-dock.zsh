@@ -12,7 +12,7 @@
 #                                                                                                           #
 #############################################################################################################
 
-#Change the following items to add to the dock. 
+#Change the following items to add or remove to the dock. 
 setDock(){
 
     $dockutil --remove 'Safari'
@@ -37,16 +37,12 @@ setDock(){
     $dockutil --add '/Applications/Microsoft Edge.app' $HOME 
     $dockutil --add '/Applications/Microsoft Teams (work or school).app' $HOME 
     $dockutil --add '/Applications/Microsoft Outlook.app' $HOME 
-    $dockutil --add '/Applications/Microsoft Word.app' $HOME 
     $dockutil --add '/Applications/Microsoft Excel.app' $HOME 
     $dockutil --add '/Applications/Microsoft PowerPoint.app' $HOME 
     $dockutil --add '/Applications/Microsoft OneNote.app' $HOME 
     $dockutil --add '/Applications/Microsoft OneDrive.app' $HOME 
     $dockutil --add '/Applications/Company Portal.app' $HOME 
     $dockutil --add '/Applications/Microsoft Defender.app' $HOME 
-
-    #Outlook, Edge, Teams, Word, Excel, Powerpoint, OneNote, 
-
 }
 
 #############################################################################################################
