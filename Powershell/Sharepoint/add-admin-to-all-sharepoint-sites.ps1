@@ -1,7 +1,7 @@
   
     #################################################################################################################
     #                                                                                                               #
-    #           This script adds the specified account to all the sharepoint sites                                  #
+    #           This script adds the specified account as owner to all the sharepoint sites                         #
     #                                                                                                               #
     #                                                                                                               #
     #################################################################################################################
