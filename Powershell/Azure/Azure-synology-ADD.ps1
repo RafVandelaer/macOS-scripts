@@ -10,7 +10,7 @@
     #           1.  Install Azure Powershell Module:                                                                   #
     #               learn.microsoft.com/en-us/powershell/azure/install-azure-powershell                                #
     #           2.  Install MS Graph Module:                                                                           #
-    #               learn.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0         #                                                                               #
+    #               learn.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0         #    
     #           3.  Install-Module -Name Az.ADDomainServices                                                           #
     #           4.  Run Connect-MgGraph -Scopes AppRoleAssignment.ReadWrite.All,Application.ReadWrite.All -NoWelcome   #
     #           5.  Change the variables below before running the script                                               #
