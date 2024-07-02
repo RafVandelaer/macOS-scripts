@@ -250,7 +250,7 @@ useOverlayIcon="true"                                                           
 if [[ "$useOverlayIcon" == "true" ]]; then
     #xxd -p -s 260 "$(defaults read /Library/Preferences/com.jamfsoftware.jamf self_service_app_path)"/Icon$'\r'/..namedfork/rsrc | xxd -r -p > /var/tmp/overlayicon.icns
     #overlayicon="/var/tmp/overlayicon.icns"
-    overlayicon="/Shared/company-logo.png"
+    overlayicon="/Users/Shared/company-logo.icns"
 else
     overlayicon=""
 fi
