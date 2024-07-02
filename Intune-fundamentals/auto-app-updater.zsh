@@ -244,12 +244,13 @@ fi
 
 ### Overlay Icon ###
 
-useOverlayIcon="false"                                                           # Toggles swiftDialog to use an overlay icon [ true (default) | false ]
+useOverlayIcon="true"                                                           # Toggles swiftDialog to use an overlay icon [ true (default) | false ]
 
 # Create `overlayicon` from Self Service's custom icon (thanks, @meschwartz!)
 if [[ "$useOverlayIcon" == "true" ]]; then
-    xxd -p -s 260 "$(defaults read /Library/Preferences/com.jamfsoftware.jamf self_service_app_path)"/Icon$'\r'/..namedfork/rsrc | xxd -r -p > /var/tmp/overlayicon.icns
-    overlayicon="/var/tmp/overlayicon.icns"
+    #xxd -p -s 260 "$(defaults read /Library/Preferences/com.jamfsoftware.jamf self_service_app_path)"/Icon$'\r'/..namedfork/rsrc | xxd -r -p > /var/tmp/overlayicon.icns
+    #overlayicon="/var/tmp/overlayicon.icns"
+    overlayicon="/Shared/company-logo.png"
 else
     overlayicon=""
 fi

@@ -805,10 +805,16 @@ iP6KG35ERETUK+HG1OdV5WcAPnrYD7/uBTChdX7kj1ZdREREREQDHTf8iIiIqFda
 YtFHHC2bAMF/dv6QBw9XcNhHRERERGSLG35ERER03EINTVfD0ZMzscjN1i1ERERE
 RAMdB35EREREREREREQl5P8Dao/4sxOQ2fAAAAAASUVORK5CYII="
 
-path="/Users/Shared/company-logo.png"
+path="/Users/Shared/company-logo.icns"
 
 echo $logo | /usr/bin/base64 --decode > $path
 
 #check if file is in place, exit 0
+if [ -f "$path" ]; then
+    exit 0
+else 
+    exit 1
+fi
+
 
 #/usr/bin/openssl base64 -in $logo -out $path
