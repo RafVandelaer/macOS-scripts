@@ -4,6 +4,21 @@
 
 
 #TODO: plist van dialog zodat meldingen aan staan
+#https://github.com/swiftDialog/swiftDialog/wiki/Notifications
+
+#Logo beschikbaar maken ook via link boven hier
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# IT Support Variable (thanks, @AndrewMBarnett)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+### Support Team Details ###
+
+supportTeamName="Lab9 Pro Support"
+supportTeamPhone=""
+supportTeamEmail=""
+supportTeamWebsite="https://lab9pro.be"
+supportTeamHyperlink="[${supportTeamWebsite}](https://${supportTeamWebsite})"
 
 
 
@@ -297,17 +312,6 @@ else
     Patch_Week_Start_Date=$CurrentDate
 fi 
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# IT Support Variable (thanks, @AndrewMBarnett)
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-### Support Team Details ###
-
-supportTeamName="Lab9 Pro Support"
-supportTeamPhone="03 747 09 03"
-supportTeamEmail="support.al@lab9pro.be"
-supportTeamWebsite="https://lab9pro.be"
-supportTeamHyperlink="[${supportTeamWebsite}](https://${supportTeamWebsite})"
 
 # Create the help message based on Support Team variables
 helpMessage="If you need assistance, please contact ${supportTeamName}:  \n- **Telephone:** ${supportTeamPhone}  \n- **Email:** ${supportTeamEmail}  \n- **Help Website:** ${supportTeamHyperlink}  \n\n**Computer Information:**  \n- **Operating System:**  $osVersion ($osBuild)  \n- **Serial Number:** $serialNumber  \n- **Dialog:** $dialogVersion  \n- **Started:** $timestamp  \n- **Script Version:** $scriptVersion"

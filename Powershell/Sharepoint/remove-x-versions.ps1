@@ -9,7 +9,7 @@
 
     
  #Config Parameters
- $SiteURL = "https://mvharchitecten.sharepoint.com/sites/MVHarchitects2/"
+ $SiteURL = "https://SITENAME.sharepoint.com/sites/SITENAME/"
 
  $VersionsToKeep = 7
   
