@@ -4,7 +4,6 @@
 
 
 #TODO: plist van dialog zodat meldingen aan staan
-#misschien terug .SH ipv zsh
 #https://github.com/swiftDialog/swiftDialog/wiki/Notifications
 
 #Logo beschikbaar maken ook via link boven hier
