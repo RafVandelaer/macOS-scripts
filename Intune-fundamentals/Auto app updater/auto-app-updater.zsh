@@ -1,13 +1,6 @@
 #!/bin/zsh --no-rcs
 
 
-
-
-#TODO: plist van dialog zodat meldingen aan staan
-#https://github.com/swiftDialog/swiftDialog/wiki/Notifications
-
-#Logo beschikbaar maken ook via link boven hier
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # IT Support Variable (thanks, @AndrewMBarnett)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
