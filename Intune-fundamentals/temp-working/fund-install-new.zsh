@@ -149,27 +149,27 @@ main() {
 		logging "checking if wallpaper is already available."
 		checkAndSetWallpaper
 		logging "demoting user if configured"
-		demoteUserToStandard
+		#demoteUserToStandard
 		logging "All done for this round"
 	
 	fi
 	
     exit 0
 }
-function demoteUserToStandard{
-	currentAdminUser=$(ls -l /dev/console | awk '{ print $3 }')
+# function demoteUserToStandard{
+# 	currentAdminUser=$(ls -l /dev/console | awk '{ print $3 }')
 
-      if [[ $currentAdminUser != "sifi" ]]; then
-        IsUserAdmin=$(id -G $currentAdminUser| grep 80)
-            if [[ -n "$IsUserAdmin" ]]; then
-				echo "demoting $currentAdminUser to standard user"
-              /usr/sbin/dseditgroup -o edit -n /Local/Default -d $currentAdminUser -t "user" "admin"
-              exit 0
-            else
-                echo "$currentAdminUser already standard user..."
-            fi
-      fi
-}
+#       if [[ $currentAdminUser != "sifi" ]]; then
+#         IsUserAdmin=$(id -G $currentAdminUser| grep 80)
+#             if [[ -n "$IsUserAdmin" ]]; then
+# 				echo "demoting $currentAdminUser to standard user"
+#               /usr/sbin/dseditgroup -o edit -n /Local/Default -d $currentAdminUser -t "user" "admin"
+#               exit 0
+#             else
+#                 echo "$currentAdminUser already standard user..."
+#             fi
+#       fi
+# }
 function checkAndSetWallpaper  () {
 	#checking if wallpaper was already set
 	if [[ ! -f $wallpaperIsSet ]]; then
