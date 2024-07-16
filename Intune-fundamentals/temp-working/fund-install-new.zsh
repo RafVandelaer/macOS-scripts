@@ -204,20 +204,29 @@ function demoteUserToStandard () {
 	fi
 }
 function checkAndSetWallpaper  () {
+	currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
 	#checking if wallpaper was already set
 	if [[ ! -f $wallpaperIsSet ]]; then
 		#if not set, setting once, if file is available
 		if [[ -f $wallpaper ]]; then
+
+			$wallpaper | md5 > $wallpaperIsSet
 			logging "wallpaper available and not yet configured, configuring..."
-			currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
 			sudo -u "$currentDesktopUser" /usr/local/bin/desktoppr $wallpaper
-			touch $wallpaperIsSet
 			depnotify_command "Status: Setting wallpaper"
 		else
 			logging "wallpaper not yet available or never configured"
 		fi
+	#if already set, checking if wallpaper is newer.
 	else
-		logging "wallpaper was already set"
+		logging "wallpaper was already set, checking if file is newer"
+		storedMD5=$(<"$wallpaperIsSet")
+		newMD5=$($wallpaper | md5)
+		if [[ "$storedMD5" = "$newMD5" ]]; then
+			logging "wallpaper is the same, not changing"
+		else
+			sudo -u "$currentDesktopUser" /usr/local/bin/desktoppr $wallpaper
+		fi
 	fi
 	
 }
