@@ -42,8 +42,8 @@
 		fi
 
 		#Check in the intake document which items the customer wants to add to the dock. Standard Apple Items are being removed. 
-		#All Microsoft items should be contained.
-		dockitems=('/Applications/Microsoft Outlook.app' '/Applications/Microsoft Edge' '/Applications/Microsoft Teams' '/Applications/Microsoft Word' '/Applications/Microsoft Excel')
+		#All Microsoft items should be contained. DO NOT FORGET THE .APP extension!!!!!!!!!!!!!!!!!!!!!!
+		dockitems=('/Applications/Microsoft Outlook.app' '/Applications/Microsoft Edge.app' '/Applications/Microsoft Teams.app' '/Applications/Microsoft Word.app' '/Applications/Microsoft Excel.app')
 		
 
 ########################################### Parameters to modify /end #########################################################
