@@ -165,7 +165,6 @@ main() {
 }
 function createDock(){
 	#getting latest index so we can restart dock
-	length=${#dockitems[@]}
 	depnotify_command "Status: Configuring dock"
 
 	#removing items
@@ -183,18 +182,13 @@ function createDock(){
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Muziek --no-restart
 
 		for item in "${dockitems[@]}"; do
-			if [[length == ${!name[*]}]]; then
-				#if last item
-				sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item
-			else
-				sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item --no-restart
-			fi
+			sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item --no-restart
 		done
-	
+	killall -KILL Dock
 
 }
 function demoteUserToStandard () {
-	if [[ $demoteUser ]]; then
+	if [ $demoteUser == true]; then
 	currentAdminUser="$(stat -f "%Su" /dev/console)"
 		sudo dseditgroup -o edit -d "$currentAdminUser" -t user admin 
 		errcode=$? 
@@ -362,14 +356,17 @@ runDEP(){
 			((countLabels--))
 			itemName=""
 		done
+	
 
-		# MARK: Finishing
-		# Prevent re-run of script if conditionFile is set
-		if [[ ! -z "$conditionFile" ]]; then
-			printlog "Touching condition file so script will not run again"
-			touch "$conditionFile" || true
-			printlog "$(ls -al "$conditionFile" || true)"
-		fi
+}
+endDEP(){
+	# Prevent re-run of script if conditionFile is set
+	#OLD condition file is replaced with own
+		# if [[ ! -z "$conditionFile" ]]; then
+		# 	printlog "Touching condition file so script will not run again"
+		# 	touch "$conditionFile" || true
+		# 	printlog "$(ls -al "$conditionFile" || true)"
+		# fi
 
 		# Show error to user if any
 		printlog "Errors: $errorCount"
@@ -389,7 +386,6 @@ runDEP(){
 
 		printlog "Ending"
 		
-
 }
 caffexit () {
     kill "$caffeinatepid" || true
