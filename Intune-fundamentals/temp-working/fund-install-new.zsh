@@ -158,6 +158,7 @@ main() {
 		demoteUserToStandard
 		logging "Customizing dock..."
 		createDock
+		endDEP
 		logging "All done for now"
 	
 	fi
@@ -188,7 +189,7 @@ function createDock(){
 
 }
 function demoteUserToStandard () {
-	if [ $demoteUser == true]; then
+	if [ $demoteUser = true]; then
 	currentAdminUser="$(stat -f "%Su" /dev/console)"
 		sudo dseditgroup -o edit -d "$currentAdminUser" -t user admin 
 		errcode=$? 
@@ -198,6 +199,8 @@ function demoteUserToStandard () {
 			fi 
 		logging "Admin rights revoked for user $currentAdminUser"
 		depnotify_command "Status: Revoking admin rights for user $currentAdminUser"
+	else
+		logging "No demoting needed"
 	fi
 }
 function checkAndSetWallpaper  () {
@@ -213,6 +216,8 @@ function checkAndSetWallpaper  () {
 		else
 			logging "wallpaper not yet available or never configured"
 		fi
+	else
+		logging "wallpaper was already set"
 	fi
 	
 }
