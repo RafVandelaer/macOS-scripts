@@ -33,13 +33,20 @@
 		#you can choose other apps for intel or arm (Apple Mx) architecture. ARM64 = Apple Mx.
 		#All the neccesary apps for the fundamentals install are already installed. 
 		#https://github.com/Installomator/Installomator/blob/main/Labels.txt
-
 		if [[ $(arch) == "arm64" ]]; then
-			items=(microsoftautoupdate theunarchiver microsoftoffice365 microsoftedge microsoftteams microsoftonedrive microsoftdefender microsoftcompanyportal displaylinkmanager)
+			items=(microsoftautoupdate microsoftoffice365 microsoftedge microsoftteams microsoftonedrive microsoftdefender microsoftcompanyportal )
 			# displaylinkmanager
 		else
-			items=(microsoftautoupdate theunarchiver microsoftoffice365 microsoftedge microsoftteams microsoftonedrive microsoftdefender microsoftcompanyportal)
+			items=(microsoftautoupdate microsoftoffice365 microsoftedge microsoftteams microsoftonedrive microsoftdefender microsoftcompanyportal)
 		fi
+
+		#Check in the intake document which items the customer wants to add to the dock. Standard Apple Items are being removed. 
+		#All Microsoft items should be contained.
+		dockitems=('/Applications/Microsoft Outlook.app' '/Applications/Microsoft Edge' '/Applications/Microsoft Teams' '/Applications/Microsoft Word' '/Applications/Microsoft Excel')
+		
+
+########################################### Parameters to modify /end #########################################################
+
 
 	#Installomator variables, here you can configure which labels need to be updated with auto updater. Alternativly copy paste from above.
 		interactiveMode="${4:="2"}"                             # Parameter 4: Interactive Mode [ 0 (Completely Silent) | 1 (Silent Discovery, Interactive Patching) | 2 (Full Interactive) (default) ]
@@ -86,7 +93,7 @@ scriptURL="https://raw.githubusercontent.com/Lab9Pro-AL/Intune/main/auto-app-upd
 mkdir $dir
 
 main() {
-    #Main function of this script
+    #Main function of this script, here is where the magic happens
 
 	#checking if first run, if so we deploy all software and run DEPnotify
 	# Installs the latest release of Installomator from Github
@@ -135,43 +142,70 @@ main() {
 		logging "Starting DEPNotify"
 		startDEPNotify
 		logging "Items to install: ${items[*]}"
-		#OLD
-		#installomatorInstall dockutil
-		#installomatorInstall desktoppr
-		#installomatorInstall swiftdialog
-		#installomatorInstall dialog
-		
-		#if neccesary, install privileges app and it's helper-tool
+
+		logging "Running DEPNotify and installing all apps. Check /var/log/intune/Installomator-DEP.log"
+		runDEP
+		#if neccesary, install privileges app and it's helper-tool, adding to dock too.
 		if [ "$isAllowedToBecomeAdmin" = true ] ; then
 			installomatorInstall privileges
 			install-privileges-helper
+			dockitems+=("/Applications/Privileges.app")
 		fi
-		logging "Running DEPNotify and installing all apps. Check /var/log/intune/Installomator-DEP.log"
-		runDEP
 		logging "checking if wallpaper is already available."
 		checkAndSetWallpaper
 		logging "demoting user if configured"
-		#demoteUserToStandard
-		logging "All done for this round"
+		demoteUserToStandard
+		logging "Customizing dock..."
+		createDock
+		logging "All done for now"
 	
 	fi
 	
     exit 0
 }
-# function demoteUserToStandard{
-# 	currentAdminUser=$(ls -l /dev/console | awk '{ print $3 }')
+function createDock(){
+	#getting latest index so we can restart dock
+	indexes=( "${!array[@]}" )
+	lastindex=${indexes[-1]}
 
-#       if [[ $currentAdminUser != "sifi" ]]; then
-#         IsUserAdmin=$(id -G $currentAdminUser| grep 80)
-#             if [[ -n "$IsUserAdmin" ]]; then
-# 				echo "demoting $currentAdminUser to standard user"
-#               /usr/sbin/dseditgroup -o edit -n /Local/Default -d $currentAdminUser -t "user" "admin"
-#               exit 0
-#             else
-#                 echo "$currentAdminUser already standard user..."
-#             fi
-#       fi
-# }
+
+	#removing items
+	
+	currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Berichten --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Mail --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove "Foto's" --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Kaarten --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove FaceTime --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Contacten --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Notities --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Herrineringen --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove FreeForm --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove TV --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Muziek --no-restart
+
+		for item in "${dockitems[@]}"; do
+			if [[indexes == lastindex]]; then
+				#if last item
+				sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item
+			else
+				sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item --no-restart
+			fi
+		done
+	
+
+}
+function demoteUserToStandard{
+	currentAdminUser="$(stat -f "%Su" /dev/console)"
+
+		sudo dseditgroup -o edit -d "$currentAdminUser" -t user admin 
+		errcode=$? 
+			if [ "$errcode" -ne 0 ]; 
+				then 
+				logging "couldn't demote user to standard..."
+			fi 
+		logging "Admin rights revoked for user $currentAdminUser"  
+}
 function checkAndSetWallpaper  () {
 	#checking if wallpaper was already set
 	if [[ ! -f $wallpaperIsSet ]]; then
