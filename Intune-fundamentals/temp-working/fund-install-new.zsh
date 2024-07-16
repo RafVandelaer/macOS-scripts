@@ -195,7 +195,7 @@ function createDock(){
 	
 
 }
-function demoteUserToStandard{
+function demoteUserToStandard () {
 	currentAdminUser="$(stat -f "%Su" /dev/console)"
 
 		sudo dseditgroup -o edit -d "$currentAdminUser" -t user admin 
