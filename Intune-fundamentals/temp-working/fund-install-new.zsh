@@ -160,8 +160,7 @@ main() {
 		logging "All done for now"
 	
 	fi
-	
-    exit 0
+	caffexit 0
 }
 function createDock(){
 	#getting latest index so we can restart dock
@@ -384,7 +383,7 @@ runDEP(){
 		printlog "Remove $(rm -fv $DEPNOTIFY_LOG || true)"
 
 		printlog "Ending"
-		caffexit $errorCount
+		
 
 }
 caffexit () {
