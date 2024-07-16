@@ -110,7 +110,7 @@ main() {
 				logging "Same file on server, not downloading..."
 				#if md5 are the same, no need to download again.
 				#Execute the script
-				$dir/auto-app-updater.zsh null null null $interactiveMode $ignoredLabels $requiredLabels $optionalLabels $installomatorOptions $maxDeferrals
+				$fullpath null null null $interactiveMode $ignoredLabels $requiredLabels $optionalLabels $installomatorOptions $maxDeferrals
 			else
 				#other md5 -> need to download newer script and change the stored MD5
 				logging "Other version of auto-patch, let's go."
@@ -238,7 +238,7 @@ function downloadAndRunAutoAppUpdater () {
     # Make the script executable
      chmod +x $fullpath
     #Execute the script
-      $dir/auto-app-updater.zsh null null null $interactiveMode $ignoredLabels $requiredLabels $optionalLabels $installomatorOptions $maxDeferrals
+      $fullpath null null null $interactiveMode $ignoredLabels $requiredLabels $optionalLabels $installomatorOptions $maxDeferrals
 
 }
 
