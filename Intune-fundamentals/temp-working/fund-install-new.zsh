@@ -69,7 +69,7 @@ LOGO="microsoft"
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 scriptVersion="9.11"
 # Command-file to DEPNotify
-DEPNOTIFY_LOG="/var/tmp/intune/depnotify.log"
+DEPNOTIFY_LOG="/var/tmp/depnotify.log"
 firstrun="/Users/Shared/Lab9Pro/firstrun"
 wallpaperIsSet="/Users/Shared/Lab9Pro/wallpaperIsSet"
 # Counters
