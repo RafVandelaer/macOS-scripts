@@ -130,7 +130,9 @@ main() {
 		items+=("swiftdialog")
 		items+=("dialog")
 		#running depnotify asap
+		logging "configuring DEPNotify"
 		configDEP
+		logging "Starting DEPNotify"
 		startDEPNotify
 		logging "Items to install: ${items[*]}"
 		#OLD
@@ -253,7 +255,7 @@ configDEP(){
 		# MARK: Functions
 		printlog "depnotify_command function"
 		echo "" > $DEPNOTIFY_LOG || true
-		depnotify_command "Configureren van items, even geduld."
+		depnotify_command "Status: Configureren van items, even geduld."
 
 		# MARK: Install DEPNotify
 		cmdOutput="$( ${destFile} depnotify LOGO=$LOGO NOTIFY=silent BLOCKING_PROCESS_ACTION=ignore LOGGING=WARN || true )"
