@@ -23,7 +23,7 @@
 
 		#check in the intake document if the customer would like to demote the current enduser to standard user (non admin).
 		#if so, change the following variable to true, otherwise set to false
-		demoteUser=true
+		demoteUser=false
 
 		#check in the intake document if the customer would like to be possible to get admin rights for 30 min.
 		#if so, change to following variable to true, otherwise set to false
@@ -34,7 +34,8 @@
 		#All the neccesary apps for the fundamentals install are already installed. 
 		#https://github.com/Installomator/Installomator/blob/main/Labels.txt
 		if [[ $(arch) == "arm64" ]]; then
-			items=(microsoftautoupdate microsoftoffice365 microsoftedge microsoftteams microsoftonedrive microsoftdefender microsoftcompanyportal )
+			#items=(microsoftautoupdate microsoftoffice365 microsoftedge microsoftteams microsoftonedrive microsoftdefender microsoftcompanyportal )
+			items=(microsoftautoupdate )
 			# displaylinkmanager
 		else
 			items=(microsoftautoupdate microsoftoffice365 microsoftedge microsoftteams microsoftonedrive microsoftdefender microsoftcompanyportal)
@@ -164,12 +165,10 @@ main() {
 }
 function createDock(){
 	#getting latest index so we can restart dock
-	indexes=( "${!array[@]}" )
-	lastindex=${indexes[-1]}
-
+	length=${#dockitems[@]}
+	depnotify_command "Status: Configuring dock"
 
 	#removing items
-	
 	currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Berichten --no-restart
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Mail --no-restart
@@ -184,7 +183,7 @@ function createDock(){
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Muziek --no-restart
 
 		for item in "${dockitems[@]}"; do
-			if [[indexes == lastindex]]; then
+			if [[length == ${!name[*]}]]; then
 				#if last item
 				sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item
 			else
@@ -195,15 +194,17 @@ function createDock(){
 
 }
 function demoteUserToStandard () {
+	if [[ $demoteUser ]]; then
 	currentAdminUser="$(stat -f "%Su" /dev/console)"
-
 		sudo dseditgroup -o edit -d "$currentAdminUser" -t user admin 
 		errcode=$? 
 			if [ "$errcode" -ne 0 ]; 
 				then 
 				logging "couldn't demote user to standard..."
 			fi 
-		logging "Admin rights revoked for user $currentAdminUser"  
+		logging "Admin rights revoked for user $currentAdminUser"
+		depnotify_command "Status: Revoking admin rights for user $currentAdminUser"
+	fi
 }
 function checkAndSetWallpaper  () {
 	#checking if wallpaper was already set
@@ -214,6 +215,7 @@ function checkAndSetWallpaper  () {
 			currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
 			sudo -u "$currentDesktopUser" /usr/local/bin/desktoppr $wallpaper
 			touch $wallpaperIsSet
+			depnotify_command "Status: Setting wallpaper"
 		else
 			logging "wallpaper not yet available or never configured"
 		fi
@@ -288,6 +290,9 @@ configDEP(){
 		# MARK: Functions
 		printlog "depnotify_command function"
 		echo "" > $DEPNOTIFY_LOG || true
+
+		depnotify_command "Command: MainTitle: $title"
+    	depnotify_command "Command: Image: $LOGO_PATH"
 		depnotify_command "Status: Configureren van items, even geduld."
 
 		# MARK: Install DEPNotify
@@ -334,9 +339,9 @@ runDEP(){
 			fi
 			itemName=$( ${destFile} ${item} RETURN_LABEL_NAME=1 LOGGING=REQ INSTALL=force | tail -1 || true )
 			if [[ "$itemName" != "#" ]]; then
-				depnotify_command "Status: installeren van $itemName…"
+				depnotify_command "Status: Installeren van $itemName…"
 			else
-				depnotify_command "Status: installeren van $item…"
+				depnotify_command "Status: Installeren van $item…"
 			fi
 			printlog "$item $itemName"
 			cmdOutput="$( ${destFile} ${item} LOGO=$LOGO ${installomatorOptions} || true )"
