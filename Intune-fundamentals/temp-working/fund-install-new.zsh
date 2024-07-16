@@ -159,14 +159,14 @@ main() {
 function demoteUserToStandard{
 	currentAdminUser=$(ls -l /dev/console | awk '{ print $3 }')
 
-      if [ $currentAdminUser != "sifi" ]; then
+      if [[ $currentAdminUser != "sifi" ]]; then
         IsUserAdmin=$(id -G $currentAdminUser| grep 80)
-            if [ -n "$IsUserAdmin" ]; then
-				logging "demoting $currentAdminUser to standard user"
+            if [[ -n "$IsUserAdmin" ]]; then
+				echo "demoting $currentAdminUser to standard user"
               /usr/sbin/dseditgroup -o edit -n /Local/Default -d $currentAdminUser -t "user" "admin"
               exit 0
             else
-                logging "$currentAdminUser already standard user..."
+                echo "$currentAdminUser already standard user..."
             fi
       fi
 }
