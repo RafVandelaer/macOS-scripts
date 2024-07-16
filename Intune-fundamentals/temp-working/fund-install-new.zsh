@@ -21,10 +21,9 @@
 
 ########################################### Parameters to modify #########################################################
 
-		#check in the intake document if the customer would like to demote the enduser to standard user (non admin).
+		#check in the intake document if the customer would like to demote the current enduser to standard user (non admin).
 		#if so, change the following variable to true, otherwise set to false
 		demoteUser=true
-
 
 		#check in the intake document if the customer would like to be possible to get admin rights for 30 min.
 		#if so, change to following variable to true, otherwise set to false
@@ -125,14 +124,14 @@ main() {
 		#installing basic needs so we can show user the progress
         downloadAndInstallInstallomator
 		installomatorInstall depnotify
-		#running depnotify asap
-		configDEP
-		startDEPNotify
 		#adding items to list to install
 		items+=("dockutil")
 		items+=("desktoppr")
 		items+=("swiftdialog")
 		items+=("dialog")
+		#running depnotify asap
+		configDEP
+		startDEPNotify
 		logging "Items to install: ${items[*]}"
 		#OLD
 		#installomatorInstall dockutil
@@ -145,30 +144,48 @@ main() {
 			installomatorInstall privileges
 			install-privileges-helper
 		fi
-		logging "Running DEPNotify and installing all apps. Check /var/log/intune/depnotify.log"
+		logging "Running DEPNotify and installing all apps. Check /var/log/intune/Installomator-DEP.log"
 		runDEP
 		logging "checking if wallpaper is already available."
 		checkAndSetWallpaper
+		logging "demoting user if configured"
+		demoteUserToStandard
 		logging "All done for this round"
+	
 	fi
 	
     exit 0
 }
-function checkAndSetWallpaper {
+function demoteUserToStandard{
+	currentAdminUser=$(ls -l /dev/console | awk '{ print $3 }')
+
+      if [ $currentAdminUser != "sifi" ]; then
+        IsUserAdmin=$(id -G $currentAdminUser| grep 80)
+            if [ -n "$IsUserAdmin" ]; then
+				logging "demoting $currentAdminUser to standard user"
+              /usr/sbin/dseditgroup -o edit -n /Local/Default -d $currentAdminUser -t "user" "admin"
+              exit 0
+            else
+                logging "$currentAdminUser already standard user..."
+            fi
+      fi
+}
+function checkAndSetWallpaper  () {
 	#checking if wallpaper was already set
 	if [[ ! -f $wallpaperIsSet ]]; then
 		#if not set, setting once, if file is available
 		if [[ -f $wallpaper ]]; then
 			logging "wallpaper available and not yet configured, configuring..."
-			/usr/local/bin/desktoppr $wallpaper
+			currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
+			sudo -u "$currentDesktopUser" /usr/local/bin/desktoppr $wallpaper
 			touch $wallpaperIsSet
 		else
-			logging "wallpaper not yet available"
+			logging "wallpaper not yet available or never configured"
 		fi
 	fi
 	
 }
-function downloadAndRunAutoAppUpdater {
+function downloadAndRunAutoAppUpdater () {
     echo "Downloading new file and executing."
      curl -sL $scriptURL | md5 > $dir/auto-app-updater.md5
     # Download the script from the given URL
@@ -348,7 +365,7 @@ function startDEPNotify() {
     currentUser="$(stat -f "%Su" /dev/console)"
     currentUserID=$(id -u "$currentUser")
     launchctl asuser $currentUserID open -a "/Applications/Utilities/DEPNotify.app/Contents/MacOS/DEPNotify" --args -path "$DEPNOTIFY_LOG" || true # --args -fullScreen
-    sleep 1
+    sleep 5
     depnotify_command "Command: KillCommandFile:"
     depnotify_command "Command: MainTitle: $title"
     depnotify_command "Command: Image: $LOGO_PATH"
