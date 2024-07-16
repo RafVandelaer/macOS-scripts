@@ -293,7 +293,7 @@ configDEP(){
 
 		depnotify_command "Command: MainTitle: $title"
     	depnotify_command "Command: Image: $LOGO_PATH"
-		depnotify_command "Status: Configureren van items, even geduld."
+		depnotify_command "Status: Controle van toestel, even geduld."
 
 		# MARK: Install DEPNotify
 		cmdOutput="$( ${destFile} depnotify LOGO=$LOGO NOTIFY=silent BLOCKING_PROCESS_ACTION=ignore LOGGING=WARN || true )"
@@ -405,7 +405,7 @@ function startDEPNotify() {
     currentUser="$(stat -f "%Su" /dev/console)"
     currentUserID=$(id -u "$currentUser")
     launchctl asuser $currentUserID open -a "/Applications/Utilities/DEPNotify.app/Contents/MacOS/DEPNotify" --args -path "$DEPNOTIFY_LOG" || true # --args -fullScreen
-    sleep 5
+    sleep 1
     depnotify_command "Command: KillCommandFile:"
     depnotify_command "Command: MainTitle: $title"
     depnotify_command "Command: Image: $LOGO_PATH"
