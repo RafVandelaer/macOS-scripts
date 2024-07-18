@@ -178,9 +178,10 @@ function createDock(){
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove FaceTime --no-restart
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Contacten --no-restart
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Notities --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Herrineringen --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove FreeForm --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Herinneringen --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Freeform --no-restart
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove TV --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Agenda --no-restart
 	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Muziek --no-restart
 
 		for item in "${dockitems[@]}"; do
@@ -190,7 +191,6 @@ function createDock(){
 
 }
 function demoteUserToStandard () {
-	echo $demoteUser
 	if [ $demoteUser -eq 1 ]; then
 	currentAdminUser="$(stat -f "%Su" /dev/console)"
 		sudo dseditgroup -o edit -d "$currentAdminUser" -t user admin 
@@ -203,7 +203,7 @@ function demoteUserToStandard () {
 		depnotify_command "Status: Revoking admin rights for user $currentAdminUser"
 	else
 		logging "No demoting needed"
-		logging "var is: $$demoteUser"
+		logging "Demoting was set to: $$demoteUser"
 	fi
 }
 function checkAndSetWallpaper  () {
