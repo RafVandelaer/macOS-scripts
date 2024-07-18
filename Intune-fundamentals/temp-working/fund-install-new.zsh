@@ -23,7 +23,7 @@
 
 		#check in the intake document if the customer would like to demote the current enduser to standard user (non admin).
 		#if so, change the following variable to 1, otherwise set to 0.
-		demoteUser=1
+		demoteUser=0
 
 		#check in the intake document if the customer would like to be possible to get admin rights for 30 min.
 		#if so, change to following variable to 1, otherwise set to 0.
@@ -34,11 +34,12 @@
 		#All the neccesary apps for the fundamentals install are already installed. 
 		#https://github.com/Installomator/Installomator/blob/main/Labels.txt
 		if [[ $(arch) == "arm64" ]]; then
-			items=( microsoftofficebusinesspro microsoftedge microsoftonedrive microsoftdefender microsoftcompanyportal )
-			#items=(microsoftautoupdate )
+			#items=( microsoftofficebusinesspro microsoftedge microsoftonedrive microsoftdefender microsoftcompanyportal )
+			items=(microsoftdefender )
 			# displaylinkmanager
 		else
-			items=( microsoftofficebusinesspro microsoftedge microsoftonedrive microsoftdefender microsoftcompanyportal)
+			items=(microsoftdefender )
+			#items=( microsoftofficebusinesspro microsoftedge microsoftonedrive microsoftdefender microsoftcompanyportal)
 		fi
 
 		#Check in the intake document which items the customer wants to add to the dock. Standard Apple Items are being removed. 
@@ -93,6 +94,7 @@ scriptURL="https://raw.githubusercontent.com/Lab9Pro-AL/Intune/main/auto-app-upd
 mkdir $dir
 
 main() {
+	exec 3>&1 1>/var/log/debug-intune.log
     #Main function of this script, this is where the magic happens
 	until ps aux | grep /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock | grep -v grep &>/dev/null; do
 		delay=$(( $RANDOM % 50 + 10 ))
@@ -160,40 +162,82 @@ main() {
 		fi
 		logging "checking if wallpaper is already available."
 		checkAndSetWallpaper
+		logging "Customizing dock..."
+		createDockV2
 		logging "demoting user if configured"
 		demoteUserToStandard $demoteUser
-		logging "Customizing dock..."
-		createDock
 		endDEP
 		logging "All done for now"
 	
 	fi
+	exec 1>&3 3>&-
 	caffexit 0
 }
 function createDock(){
 	#getting latest index so we can restart dock
 	depnotify_command "Status: Configuring dock"
-
+	set -x
 	#removing items
-	currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Berichten --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Mail --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove "Foto's" --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Kaarten --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove FaceTime --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Contacten --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Notities --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Herinneringen --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Freeform --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove TV --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Agenda --no-restart
-	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Muziek --no-restart
+	currentDockUser=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
+	LoggedInUserHome="/Users/$currentDockUser"
+	UserPlist=$LoggedInUserHome/Library/Preferences/com.apple.dock.plist
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Berichten -v --no-restart --allhomes  &>> "/var/log/intune/intune-fundamentals-install.log"
+
+	/usr/local/bin/dockutil --remove Mail --no-restart --allhomes
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove "Foto's" -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Kaarten -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove FaceTime -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Contacten -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Notities -v --no-restart --allhomes
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Herinneringen -v --no-restart --allhomes
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Freeform -v --no-restart --allhomes
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove TV -v --no-restart --allhomes
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Agenda -v --no-restart --allhomes
+	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Muziek -v --no-restart --allhomes
+	sleep 2
 
 		for item in "${dockitems[@]}"; do
-			sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item --no-restart
+			sudo -u "$currentDockUser" /usr/local/bin/dockutil -v --add $item --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
+			
 		done
-	killall -KILL Dock
+	 /usr/local/bin/dockutil --add "/Applications/Microsoft Defender.app" -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
+	 sleep 3
+	 
+	 sudo -i -u $currentDockUser /usr/local/bin/dockutil --add "/Applications/BBEdit.app" --no-restart > /dev/null 2>&1
 
+	/usr/bin/killall cfprefsd
+	/usr/bin/killall Dock
+	set +x
+}
+function createDockV2(){
+	#getting latest index so we can restart dock
+	depnotify_command "Status: Configuring dock V2"
+	# Define log and start logging...
+	log="/var/log/addAppstoDock.log"
+	exec &> >(tee -a "$log")
+
+	set -x
+
+	# Lets find out who we're running as...
+	scriptRunningAs=$(whoami)
+	desktopUser=$(who | awk '/console/{print $1}')
+	currentDockUser=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
+	# Determine home directory
+	desktopUserHomeDirectory=$(dscl . -read "/users/$desktopUser" NFSHomeDirectory | cut -d " " -f 2)
+	plist="${currentDockUser}/Library/Preferences/com.apple.dock.plist"
+
+	echo "The script is running under the user: $scriptRunningAs"
+	echo "The current desktop user is: $currentDockUser"
+	echo "The current desktop users home directory is: $currentDockUser" 
+	# Clear the dock
+	echo "$(date) |  Clearing Dock Items"
+	sudo -i -u $currentDockUser /usr/local/bin/dockutil --remove all --allhomes > /dev/null 2>&1
+
+	sudo -i -u $currentDockUser /usr/local/bin/dockutil --add "/Applications/FaceTime.app" --no-restart > /dev/null 2>&1
+	sudo -i -u $currentDockUser /usr/local/bin/dockutil --add "/Applications/FaceTime.app" --allhomes > /dev/null 2>&1
+	/usr/local/bin/dockutil --add "/Applications/FaceTime.app" --allhomes > /dev/null 2>&1
+	set +x
+	killall Dock
 }
 function demoteUserToStandard () {
 	if [ $demoteUser -eq 1 ]; then
@@ -428,7 +472,7 @@ function startDEPNotify() {
     depnotify_command "Command: MainTitle: $title"
     depnotify_command "Command: Image: $LOGO_PATH"
     depnotify_command "Command: MainText: $message"
-    depnotify_command "Command: Determinate: $countLabels"
+	depnotify_command "Command: Determinate: $countLabels"
 }
 
 # Notify the user using AppleScript
