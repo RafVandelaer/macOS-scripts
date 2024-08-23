@@ -46,10 +46,6 @@
 		#Most of the times this will be 1
 		changeDock=1
 
-		#Only if the variable above is set to 1, will the following variable have effect. If this is set to 1, all the existing dock items will be removed
-		#Check the intake document of the customer
-		removeAllDockItems=1
-
 		#Check in the intake document which items the customer wants to add to the dock. Standard Apple Items are being removed. 
 		#All Microsoft items should be contained. DO NOT FORGET THE .APP extension!!!!!!!!!!!!!!!!!!!!!!
 		dockitems=('/Applications/Microsoft Outlook.app' '/Applications/Microsoft Edge.app' '/Applications/Microsoft Teams.app' '/Applications/Microsoft Word.app' '/Applications/Microsoft Excel.app' '/Applications/System Settings.app')
@@ -177,11 +173,17 @@ main() {
 		logging "demoting user if configured"
 		demoteUserToStandard $demoteUser
 		endDEP
+        startOneDrive
 		logging "All done for now"
 	
 	fi
 	exec 1>&3 3>&-
 	caffexit 0
+}
+function startOneDrive(){
+    # get the currently logged-in user and go ahead if it's not root
+    currentUser=$(/bin/ls -l /dev/console | /usr/bin/awk '{ print  }')
+    sudo su $currentUser -c "open /Applications/OneDrive.app"
 }
 function createDock(){
 	#getting latest index so we can restart dock
@@ -228,10 +230,7 @@ function createDockV2(){
     originalDock="/Users/${currentDockUser}/Library/Preferences/com.apple.dock.plist"
     cp $originalDock $tmpDock
 
-	if [ $removeAllDockItems -eq 1 ] ; then
-			logging "Removing all dock items..."
-			 /usr/local/bin/dockutil --remove all --no-restart $tmpDock
-	fi
+    /usr/local/bin/dockutil --remove all --no-restart $tmpDock
     
     for item in "${dockitems[@]}"; do
 			/usr/local/bin/dockutil -v --add $item --no-restart $tmpDock 
@@ -379,7 +378,7 @@ runDEP(){
 					echo "$conditionFile exists, so we exit."
 					exit 0
 				else
-					echo "$conditionFile not found, so we continue…"
+					echo "$conditionFile not found, so we continueâ¦"
 				fi
 				;;
 		esac
@@ -405,7 +404,7 @@ runDEP(){
 			if [[ "$itemName" != "#" ]]; then
 				depnotify_command "Status: Installeren van $itemName…"
 			else
-				depnotify_command "Status: Installeren van $item…"
+				depnotify_command "Status: Installeren van $itemName…"
 			fi
 			printlog "$item $itemName"
 			cmdOutput="$( ${destFile} ${item} LOGO=$LOGO ${installomatorOptions} || true )"
@@ -566,7 +565,7 @@ EOF
 function downloadAndInstallInstallomator {
 	######################################################################
 	#
-	#  This script made by Søren Theilgaard
+	#  This script made by SÃ¸ren Theilgaard
 	#  https://github.com/Theile
 	#  Twitter and MacAdmins Slack: @theilgaard
 	#

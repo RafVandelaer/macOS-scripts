@@ -1,26 +1,65 @@
 #!/bin/zsh
+
+dockitems=('/Applications/Safari.app' '/Applications/FaceTime.app')
+
+
+
 function main(){
 
     log="/var/log/addAppstoDock.log"
     exec &> >(tee -a "$log")
+
     downloadAndInstallInstallomator
-    installomatorInstall "dockutil"
+    installomatorInstall dockutil
+    copyDockPlist
    
     exec 1>&3 3>&-
+}
+createDockV2 (){
+    tmpDock=/Users/${currentDockUser}/Desktop/dock.plist
+    originalDock="/Users/${currentDockUser}/Library/Preferences/com.apple.dock.plist"
+    cp $originalDock $tmpDock
+    cp $originalDock "/Users/${currentDockUser}/Desktop/dock-ref.plist"
+
+    #chmod 777 $tmpDock
+    chmod 777 "/Users/${currentDockUser}/Desktop/dock-ref.plist"
+    /usr/local/bin/dockutil --remove all --no-restart $tmpDock
+    
+    for item in "${dockitems[@]}"; do
+			/usr/local/bin/dockutil -v --add $item --no-restart $tmpDock 
+	done
+
+    #chmod --reference=$originalDock $tmpDock 
+    cp -f $tmpDock $originalDock
+
+    killall -KILL Dock
+
 }
 copyDockPlist(){
     cp "/Users/${currentDockUser}/Library/Preferences/com.apple.dock.plist" "/Users/${currentDockUser}/Desktop/dock.plist"
     cp "/Users/${currentDockUser}/Library/Preferences/com.apple.dock.plist" "/Users/${currentDockUser}/Desktop/dock-ref.plist"
 
+    #chmod 777 "/Users/${currentDockUser}/Desktop/dock.plist"
+    chmod 777 "/Users/${currentDockUser}/Desktop/dock-ref.plist"
     /usr/local/bin/dockutil --remove all --no-restart "/Users/${currentDockUser}/Desktop/dock.plist"
 
-    dockutil --add /Applications/Safari.app --no-restart  "/Users/${currentDockUser}/Desktop/dock.plist"
+    #dockutil --add /Applications/Safari.app --no-restart  "/Users/${currentDockUser}/Desktop/dock.plist"
+
+   
+    for item in "${dockitems[@]}"; do
+			/usr/local/bin/dockutil -v --add $item --no-restart "/Users/${currentDockUser}/Desktop/dock.plist" 
+	done
+
+    #chmod --reference="/Users/${currentDockUser}/Library/Preferences/com.apple.dock.plist" "/Users/${currentDockUser}/Desktop/dock.plist" 
+    cp -f "/Users/${currentDockUser}/Desktop/dock.plist" "/Users/${currentDockUser}/Library/Preferences/com.apple.dock.plist"
+
+    killall -KILL Dock
 
 }
 
 installomatorInstall(){
     appToInstall=$1
-   logging "Installing "$appToInstall
+   echo "Installing "$appToInstall
     /usr/local/Installomator/Installomator.sh $appToInstall
 }
 function downloadAndInstallInstallomator {
