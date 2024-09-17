@@ -128,6 +128,14 @@
 						<string>com.microsoft.wdav.netext</string>
 					</array>
 				</dict>
+				<key>NonRemovableSystemExtensions</key>
+				<dict>
+					<key>UBF8T346G9</key>
+					<array>
+						<string>com.microsoft.wdav.epsext</string>
+						<string>com.microsoft.wdav.netext</string>
+					</array>
+				</dict>
 				<key>PayloadDescription</key>
 				<string></string>
 				<key>PayloadDisplayName</key>
