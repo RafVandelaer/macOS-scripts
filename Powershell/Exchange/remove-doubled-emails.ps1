@@ -1,6 +1,7 @@
 # Define mailbox and target folder
 $mailbox = "user@example.com"
 $targetFolderName = "Double check"
+$dryRun = $true # Set to $false to perform actual moves
 
 # Load Exchange Online PowerShell module
 Import-Module ExchangeOnlineManagement
@@ -13,7 +14,7 @@ $folders = Get-MailboxFolderStatistics -Identity $mailbox | Where-Object { $_.Fo
 
 # Check and create 'Double check' folder if it doesn't exist
 $targetFolder = Get-MailboxFolderStatistics -Identity $mailbox -FolderScope "All" | Where-Object { $_.Name -eq $targetFolderName }
-if (-not $targetFolder) {
+if (-not $targetFolder -and -not $dryRun) {
     New-MailboxFolder -Identity "$mailbox:\$targetFolderName"
     Write-Output "Created folder: $targetFolderName"
 } else {
@@ -32,9 +33,13 @@ foreach ($folder in $folders) {
         $hash = $email.Body.GetHashCode()
 
         if ($emailHashes.ContainsKey($hash)) {
-            # Move duplicate email to 'Double check' folder
-            $email | Move-MailboxItem -DestinationFolder "$mailbox:\$targetFolderName"
-            Write-Output "Duplicate email moved to 'Double check' folder: $($email.Subject)"
+            if ($dryRun) {
+                Write-Output "Duplicate email found (Dry Run): $($email.Subject)"
+            } else {
+                # Move duplicate email to 'Double check' folder
+                $email | Move-MailboxItem -DestinationFolder "$mailbox:\$targetFolderName"
+                Write-Output "Duplicate email moved to 'Double check' folder: $($email.Subject)"
+            }
         } else {
             $emailHashes[$hash] = $email
         }
