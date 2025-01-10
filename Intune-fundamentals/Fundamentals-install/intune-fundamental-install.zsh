@@ -58,8 +58,9 @@
 ########################################### Parameters to modify /end #########################################################
 
 
+
 	#Installomator variables, here you can configure which labels need to be updated with auto updater. Alternativly copy paste from above.
-		interactiveMode="${4:="2"}"                             # Parameter 4: Interactive Mode [ 0 (Completely Silent) | 1 (Silent Discovery, Interactive Patching) | 2 (Full Interactive) (default) ]
+		interactiveMode="${4:="1"}"                             # Parameter 4: Interactive Mode [ 0 (Completely Silent) | 1 (Silent Discovery, Interactive Patching) | 2 (Full Interactive) (default) ]
 		ignoredLabels="${5:=""}"                                # Parameter 5: A space-separated list of Installomator labels to ignore (i.e., "microsoft* googlechrome* jamfconnect zoom* 1password* firefox* swiftdialog")
 		requiredLabels="${6:=""}"                               # Parameter 6: A space-separated list of required Installomator labels (i.e., "firefoxpkg_intl")
 		optionalLabels="${7:=""}"                               # Parameter 7: A space-separated list of optional Installomator labels (i.e., "renew") ** Does not support wildcards **
@@ -102,8 +103,12 @@ scriptURL="https://raw.githubusercontent.com/Lab9Pro-AL/Intune/main/auto-app-upd
 mkdir $dir
 
 main() {
-	exec 3>&1 1>/var/log/debug-intune.log
     #Main function of this script, this is where the magic happens
+    
+    #This part is to check if the device is ADE enrolled
+    isDEP="$(profiles status -type enrollment | grep 'DEP')"
+	if [[ $isDEP == *"Yes"* ]]; then
+	logging "is DEP enrollment. Let's GO."
 	until ps aux | grep /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock | grep -v grep &>/dev/null; do
 		delay=$(( $RANDOM % 50 + 10 ))
 		echo "$(date) |  + Dock not running, waiting [$delay] seconds"
@@ -144,7 +149,7 @@ main() {
 		
 		touch $firstrun
 		#installing basic needs so we can show user the progress
-        downloadAndInstallInstallomator
+        downloadAndInstallInstallomator2
 		installomatorInstall depnotify
 		#adding items to list to install
 		items+=("dockutil")
@@ -164,60 +169,27 @@ main() {
 		runDEP
 		#if neccesary, install privileges app and it's helper-tool, adding to dock too.
 		if [ $isAllowedToBecomeAdmin -eq 1 ] ; then
-			installomatorInstall privileges
+			installomatorInstall privileges2
 			install-privileges-helper
 			dockitems+=("/Applications/Privileges.app")
 		fi
 		logging "checking if wallpaper is already available."
 		checkAndSetWallpaper
+		logging "demoting user if configured"
+		demoteUserToStandard $demoteUser
 		if [ $changeDock -eq 1 ] ; then
 			logging "Customizing dock..."
 			createDockV2
 		fi
-		logging "demoting user if configured"
-		demoteUserToStandard $demoteUser
 		endDEP
 		logging "All done for now"
 	
 	fi
-	exec 1>&3 3>&-
+	else
+		logging "No DEP enrollment. Skipping..."
+	fi
 	caffexit 0
-}
-function createDock(){
-	#getting latest index so we can restart dock
-	depnotify_command "Status: Configuring dock"
-	set -x
-	#removing items
-	currentDockUser=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
-	LoggedInUserHome="/Users/$currentDockUser"
-	UserPlist=$LoggedInUserHome/Library/Preferences/com.apple.dock.plist
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Berichten -v --no-restart --allhomes  &>> "/var/log/intune/intune-fundamentals-install.log"
-
-	/usr/local/bin/dockutil --remove Mail --no-restart --allhomes
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove "Foto's" -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Kaarten -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove FaceTime -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Contacten -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Notities -v --no-restart --allhomes
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Herinneringen -v --no-restart --allhomes
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Freeform -v --no-restart --allhomes
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove TV -v --no-restart --allhomes
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Agenda -v --no-restart --allhomes
-	sudo -u "$currentDockUser" /usr/local/bin/dockutil --remove Muziek -v --no-restart --allhomes
-	sleep 2
-
-		for item in "${dockitems[@]}"; do
-			sudo -u "$currentDockUser" /usr/local/bin/dockutil -v --add $item --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
-			
-		done
-	 /usr/local/bin/dockutil --add "/Applications/Microsoft Defender.app" -v --no-restart --allhomes &>> "/var/log/intune/intune-fundamentals-install.log"
-	 sleep 3
-	 
-	 sudo -i -u $currentDockUser /usr/local/bin/dockutil --add "/Applications/BBEdit.app" --no-restart > /dev/null 2>&1
-
-	/usr/bin/killall cfprefsd
-	/usr/bin/killall Dock
-	set +x
+	
 }
 function createDockV2(){
 #This is a work-around function because dockutil wouldn't change the dock with Intune at ADE enrollment.
@@ -228,7 +200,7 @@ function createDockV2(){
     originalDock="/Users/${currentDockUser}/Library/Preferences/com.apple.dock.plist"
     cp $originalDock $tmpDock
 
-	if [ $removeAllDockItems -eq 1 ] ; then
+    if [ $removeAllDockItems -eq 1 ] ; then
 			logging "Removing all dock items..."
 			 /usr/local/bin/dockutil --remove all --no-restart $tmpDock
 	fi
@@ -241,6 +213,31 @@ function createDockV2(){
     cp -f $tmpDock $originalDock
 
     killall -KILL Dock
+
+}
+function createDock(){
+	#getting latest index so we can restart dock
+	depnotify_command "Status: Configuring dock"
+
+	#removing items
+	currentDesktopUser=$( echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }' )
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Berichten --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Mail --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove "Foto's" --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Kaarten --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove FaceTime --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Contacten --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Notities --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Herinneringen --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Freeform --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove TV --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Agenda --no-restart
+	sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --remove Muziek --no-restart
+
+		for item in "${dockitems[@]}"; do
+			sudo -u "$currentDesktopUser" /usr/local/bin/dockutil --add $item --no-restart
+		done
+	killall -KILL Dock
 
 }
 function demoteUserToStandard () {
@@ -560,6 +557,14 @@ EOF
             exitCode=1
         fi
 
+
+}
+function downloadAndInstallInstallomator2{
+	printlog "Installing Installomator"
+	curl -LO https://github.com/Installomator/Installomator/blob/main/Installomator.sh
+	chmod a+x Installomator.sh
+	mkdir /usr/local/Installomator
+	sudo mv Installomator.sh /usr/local/Installomator/
 
 }
 #to install installomator from https://github.com/Installomator/Installomator/blob/main/MDM/Installomator%201st%20Auto-install%20DEPNotify.sh
