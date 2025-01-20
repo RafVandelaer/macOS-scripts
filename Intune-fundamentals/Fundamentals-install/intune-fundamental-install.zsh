@@ -561,7 +561,7 @@ EOF
 }
 function downloadAndInstallInstallomator2{
 	printlog "Installing Installomator"
-	curl -LO https://github.com/Installomator/Installomator/blob/main/Installomator.sh
+	curl -LO -H 'Accept: application/vnd.github.v3.raw' https://raw.githubusercontent.com/Installomator/Installomator/refs/heads/main/Installomator.sh
 	chmod a+x Installomator.sh
 	mkdir /usr/local/Installomator
 	sudo mv Installomator.sh /usr/local/Installomator/
