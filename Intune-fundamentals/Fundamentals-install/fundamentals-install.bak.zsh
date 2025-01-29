@@ -15,7 +15,7 @@
 #                       Number of times to retry if script fails : 3                                        #
 #                                                                                                           #
 #                   Logs can be found in /var/log/intune                                                    #
-# v1.01                                                                                                          #
+#                                                                                                           #
 #############################################################################################################
 
 
@@ -104,11 +104,11 @@ mkdir $dir
 
 main() {
     #Main function of this script, this is where the magic happens
-    logging "Fundamentals version: 1.01"
+    
     #This part is to check if the device is ADE enrolled
     isDEP="$(profiles status -type enrollment | grep 'DEP')"
 	if [[ $isDEP == *"Yes"* ]]; then
-	logging "is DEP enrollment. Let's GO."
+	logging "is DEP enrollment. Let's GO.'"
 	until ps aux | grep /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock | grep -v grep &>/dev/null; do
 		delay=$(( $RANDOM % 50 + 10 ))
 		echo "$(date) |  + Dock not running, waiting [$delay] seconds"
@@ -149,7 +149,7 @@ main() {
 		
 		touch $firstrun
 		#installing basic needs so we can show user the progress
-        downloadAndInstallInstallomator2
+        downloadAndInstallInstallomator
 		installomatorInstall depnotify
 		#adding items to list to install
 		items+=("dockutil")
@@ -169,8 +169,7 @@ main() {
 		runDEP
 		#if neccesary, install privileges app and it's helper-tool, adding to dock too.
 		if [ $isAllowedToBecomeAdmin -eq 1 ] ; then
-			
-			installomatorInstall privileges2
+			installomatorInstall privileges
 			install-privileges-helper
 			dockitems+=("/Applications/Privileges.app")
 		fi
@@ -366,7 +365,7 @@ runDEP(){
 			# Check before running
 		echo "LOGO: $LOGO"
 		if [[ -z $LOGO ]]; then
-			printlog "ERROR: LOGO variable empty. Fatal problem. (no logo for depnotify). Exiting."
+			echo "ERROR: LOGO variable empty. Fatal problem. Exiting."
 			exit 1
 		fi
 		case $LOGO in
@@ -558,13 +557,6 @@ EOF
             exitCode=1
         fi
 
-
-}
-function downloadAndInstallInstallomator2 {
-	printlog "Installing Installomator with the new method (CURL)"
-	mkdir "/usr/local/Installomator"
-	curl --output-dir /usr/local/Installomator -LO https://raw.githubusercontent.com/Installomator/Installomator/refs/heads/main/Installomator.sh
-	chmod a+x "/usr/local/Installomator/Installomator.sh"
 
 }
 #to install installomator from https://github.com/Installomator/Installomator/blob/main/MDM/Installomator%201st%20Auto-install%20DEPNotify.sh
