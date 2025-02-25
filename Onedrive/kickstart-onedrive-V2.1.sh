@@ -13,13 +13,12 @@
 loggedInUser=$( scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwindow/ { print $3 }' )
 
 #!!!!!!!!!!!!!!!!!!! Aan te passen variabele bv "/Users/$loggedInUser/OneDrive - mycompany" !!!!!!!!!!!!!!!!!!!!
-oneDriveFolder="/Users/$loggedInUser/OneDrive - mycompany"
+#oneDriveFolder="/Users/$loggedInUser/OneDrive - mycompany"
+onedrivefolder=$HOME/Library/CloudStorage/$(ls ~/Library/CloudStorage/ | grep -Ei "onedrive" | grep -Evi "personal|persoonlijk|library|bibliotheken" | head -n 1)
 
 
 fixlog="/private/var/log/onedrive-kickstart/onedrive-kickstart.log"
 readonly fixlog
-
-
 
 
 logging () {
