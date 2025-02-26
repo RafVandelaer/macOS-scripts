@@ -12,21 +12,24 @@
 # Get logged in user
 loggedInUser=$( scutil <<< "show State:/Users/ConsoleUser" | awk '/Name :/ && ! /loginwindow/ { print $3 }' )
 
-#!!!!!!!!!!!!!!!!!!! Aan te passen variabele bv "/Users/$loggedInUser/OneDrive - mycompany" !!!!!!!!!!!!!!!!!!!!
-#oneDriveFolder="/Users/$loggedInUser/OneDrive - mycompany"
-onedrivefolder=$HOME/Library/CloudStorage/$(ls ~/Library/CloudStorage/ | grep -Ei "onedrive" | grep -Evi "personal|persoonlijk|library|bibliotheken" | head -n 1)
 
+#Create log
 
 fixlog="/private/var/log/onedrive-kickstart/onedrive-kickstart.log"
 readonly fixlog
-
-
+fixdate="$(date +%d%m%Y-%H:%M)"
 logging () {
 	echo $fixdate": " $1 | tee -a "$fixlog"
 }
 
-#Create log
-fixdate="$(date +%d%m%Y-%H:%M)"
+#!!!!!!!!!!!!!!!!!!! Aan te passen variabele bv "/Users/$loggedInUser/OneDrive - mycompany" !!!!!!!!!!!!!!!!!!!!
+#oneDriveFolder="/Users/$loggedInUser/OneDrive - mycompany"
+#find "/Users/raf.vandelaer@lab9pro.be" -maxdepth 1 -name "OneDrive*" -exec readlink -f {} \; | grep -v -e 'Personal' -e  "Persoonlijk" -e "library" -e "bibliotheken"
+onedrivefolder=$(find "/Users/$loggedInUser/" -maxdepth 1 -name "OneDrive*" -exec readlink -f {} \; | grep -v -e 'Personal' -e  "Persoonlijk" -e "library" -e "bibliotheken" | head -n 1)
+
+logging $onedrivefolder
+
+
 
 [[ -d "/private/var/log/onedrive-kickstart" ]] || mkdir "/private/var/log/onedrive-kickstart"
 
@@ -34,7 +37,7 @@ fixdate="$(date +%d%m%Y-%H:%M)"
 
 # Check if the OneDrive folder is present
 
-if [ -d "$oneDriveFolder" ]; then
+if [ -d "$onedrivefolder" ]; then
     logging "User has configured OneDrive."
 else
 	logging "User hasn't set up OneDrive, aborting."

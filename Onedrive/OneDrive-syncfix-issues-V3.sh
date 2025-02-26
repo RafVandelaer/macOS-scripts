@@ -54,7 +54,7 @@ else
 fi
 
 
-onedrivefolder=$HOME/Library/CloudStorage/$(ls ~/Library/CloudStorage/ | grep -Ei "onedrive" | grep -Evi "personal|persoonlijk|library|bibliotheken" | head -n 1)
+onedrivefolder=$(find "/Users/$loggedInUser/" -maxdepth 1 -name "OneDrive*" -exec readlink -f {} \; | grep -v -e 'Personal' -e  "Persoonlijk" -e "library" -e "bibliotheken" | head -n 1)
 
 
 
