@@ -97,7 +97,13 @@ function start (){
 		killall OneDrive || true
 
         getErrors
-        setDialog
+		if [[ ! -s "$errorlist" ]]; then
+			logging "no errors found, finishing up."
+			echo "File is empty"
+		else
+			setDialog
+		fi
+       
 
         finish
 
@@ -107,7 +113,7 @@ function start (){
 		logging "OneDrive directory not present, aborting."
 
         #TODO
-		/usr/local/jamf/bin/jamf displayMessage -message "Kan de OneDrive folder niet vinden. Vraag aan IT om dit aan te passen."
+		/usr/local/jamf/bin/jamf displayMessage -message "Kan de OneDrive folder niet vinden. Gelieve OneDrive te configureren."
 		exit 0
 
 	    fi
