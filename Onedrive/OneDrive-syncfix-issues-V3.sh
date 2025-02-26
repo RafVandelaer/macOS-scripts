@@ -72,8 +72,8 @@ function finish() {
 	[[ -z "$fixtrail" ]] || rm -f "$fixtrail"
 	[[ -z "$fixlead" ]] || rm -f "$fixlead"
 
-	logging "Starting Onedrive..."
-	[[ $(pgrep "OneDrive\b") ]] || open -gj "/Applications/OneDrive.app"
+	#logging "Starting Onedrive..."
+	#[[ $(pgrep "OneDrive\b") ]] || open -gj "/Applications/OneDrive.app"
 
 	[[ ! $(pgrep "caffeinate") ]] || killall "caffeinate"
 	#rm $errorlist
@@ -94,7 +94,7 @@ function start (){
     	if [ -d "$onedrivefolder" ]; then
 
 		logging "OneDrive directory $onedrivefolder is present. Stopping OneDrive."
-		killall OneDrive || true
+		#killall OneDrive || true
 
         getErrors
 		if [[ ! -s "$errorlist" ]]; then
