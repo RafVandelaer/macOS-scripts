@@ -113,7 +113,7 @@ function start (){
 		logging "OneDrive directory not present, aborting."
 
         #TODO
-		/usr/local/jamf/bin/jamf displayMessage -message "Kan de OneDrive folder niet vinden. Gelieve OneDrive te configureren."
+		#/usr/local/jamf/bin/jamf displayMessage -message "Kan de OneDrive folder niet vinden. Gelieve OneDrive te configureren."
 		exit 0
 
 	    fi
