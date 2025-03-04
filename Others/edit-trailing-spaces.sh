@@ -42,9 +42,8 @@ for arg in "$@"; do
 done
 
 if [ "$DRY_RUN" = false ]; then
-        # Print yellow message when directories are about to change
         echo -e "\033[33mYou used the --apply argument, this will change the directories with trailing spaces. Consider using the script without --apply first.\033[0m"  # Yellow text
-        sleep 2  # Pause for 2 seconds to give the user time to see the message
+        sleep 2
 fi
 
 # Ask if the user wants to use Spotlight index (mdfind) or not
