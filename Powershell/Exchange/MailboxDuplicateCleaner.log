@@ -1,0 +1,30 @@
+2025-03-06 10:27:37 - INFO - Microsoft 365 Mailbox Duplicate Cleaner v1.0
+2025-03-06 10:27:37 - INFO - Use -Help parameter for detailed instructions
+2025-03-06 10:27:37 - INFO - Connecting to Exchange Online...
+2025-03-06 10:30:06 - INFO - Microsoft 365 Mailbox Duplicate Cleaner v1.0
+2025-03-06 10:30:06 - INFO - Use -Help parameter for detailed instructions
+2025-03-06 10:30:06 - INFO - Connecting to Exchange Online...
+2025-03-06 10:30:47 - INFO - Connected to Exchange Online.
+2025-03-06 10:30:47 - INFO - Microsoft 365 Mailbox Duplicate Cleaner starting
+2025-03-06 10:30:47 - INFO - Parameters: SourceFolder=Inbox, TargetFolder=Duplicates, DryRun=True, UseContentHash=True, KeepOldest=False
+2025-03-06 10:30:48 - ERROR - Failed to create or verify target folder: The term 'Get-MailFolder' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+2025-03-06 10:30:48 - ERROR - Exiting due to folder creation failure
+2025-03-06 10:32:12 - INFO - Microsoft 365 Mailbox Duplicate Cleaner v1.0
+2025-03-06 10:32:12 - INFO - Use -Help parameter for detailed instructions
+2025-03-06 10:32:12 - INFO - Connecting to Exchange Online...
+2025-03-06 10:32:19 - INFO - Connected to Exchange Online.
+2025-03-06 10:32:19 - INFO - Microsoft 365 Mailbox Duplicate Cleaner starting
+2025-03-06 10:32:19 - INFO - Parameters: SourceFolder=Inbox, TargetFolder=Duplicates, DryRun=True, UseContentHash=True, KeepOldest=False
+2025-03-06 10:32:19 - ERROR - Failed to create or verify target folder: The term 'Get-MailFolder' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+2025-03-06 10:32:19 - ERROR - Exiting due to folder creation failure
+2025-03-06 10:33:40 - INFO - Microsoft 365 Mailbox Duplicate Cleaner v1.0
+2025-03-06 10:33:40 - INFO - Use -Help parameter for detailed instructions
+2025-03-06 10:33:40 - INFO - Connecting to Exchange Online...
+2025-03-06 10:33:46 - INFO - Connected to Exchange Online.
+2025-03-06 10:33:46 - INFO - Microsoft 365 Mailbox Duplicate Cleaner starting
+2025-03-06 10:33:46 - INFO - Parameters: SourceFolder=Inbox, TargetFolder=Duplicates, DryRun=True, UseContentHash=True, KeepOldest=False
+2025-03-06 10:33:46 - ERROR - Failed to create or verify target folder: The term 'Get-MailFolder' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+2025-03-06 10:33:46 - ERROR - Exiting due to folder creation failure
