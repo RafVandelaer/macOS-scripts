@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>PayloadDescription</key>
+			<string>Configures Privacy Preferences Policy Control settings for FortiClient</string>
+			<key>PayloadDisplayName</key>
+			<string>Privacy Preferences</string>
+			<key>PayloadEnabled</key>
+			<true/>
+			<key>PayloadIdentifier</key>
+			<string>DF4C536E-EB2D-4839-8AFF-E4E6F4946BE9</string>
+			<key>PayloadOrganization</key>
+			<string>Fortinet</string>
+			<key>PayloadType</key>
+			<string>com.apple.TCC.configuration-profile-policy</string>
+			<key>PayloadUUID</key>
+			<string>DF4C536E-EB2D-4839-8AFF-E4E6F4946BE9</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Services</key>
+			<dict>
+				<key>SystemPolicyAllFiles</key>
+				<array>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>anchor apple generic and identifier "com.fortinet.forticlient.macos.antivirus" and (certificate leaf[field.1.2.840.113635.100.6.1.9] /* exists */ or certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = AH4XFXJ7DK)</string>
+						<key>Identifier</key>
+						<string>com.fortinet.forticlient.macos.antivirus</string>
+						<key>IdentifierType</key>
+						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier "com.fortinet.FortiClient" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = AH4XFXJ7DK</string>
+						<key>Identifier</key>
+						<string>com.fortinet.FortiClient</string>
+						<key>IdentifierType</key>
+						<string>bundleID</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier fcaptmon and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = AH4XFXJ7DK</string>
+						<key>Identifier</key>
+						<string>/Library/Application Support/Fortinet/FortiClient/bin/fcaptmon</string>
+						<key>IdentifierType</key>
+						<string>path</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+					<dict>
+						<key>Allowed</key>
+						<true/>
+						<key>CodeRequirement</key>
+						<string>identifier fctservctl2 and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = AH4XFXJ7DK</string>
+						<key>Identifier</key>
+						<string>/Library/Application Support/Fortinet/FortiClient/bin/fctservctl2</string>
+						<key>IdentifierType</key>
+						<string>path</string>
+						<key>StaticCode</key>
+						<false/>
+					</dict>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>AllowUserOverrides</key>
+			<true/>
+			<key>AllowedSystemExtensions</key>
+			<dict>
+				<key>AH4XFXJ7DK</key>
+				<array>
+					<string>com.fortinet.forticlient.macos.vpn.nwextension</string>
+					<string>com.fortinet.forticlient.macos.webfilter</string>
+					<string>com.fortinet.FortiClient</string>
+					<string>com.fortinet.forticlient.macos.antivirus</string>
+				</array>
+			</dict>
+			<key>PayloadDescription</key>
+			<string>VPN Extension for FortiClient</string>
+			<key>PayloadDisplayName</key>
+			<string>VPN Extension</string>
+			<key>PayloadEnabled</key>
+			<true/>
+			<key>PayloadIdentifier</key>
+			<string>C71BB9FE-4E97-4E22-A454-38F6A731D321</string>
+			<key>PayloadOrganization</key>
+			<string>Fortinet</string>
+			<key>PayloadType</key>
+			<string>com.apple.system-extension-policy</string>
+			<key>PayloadUUID</key>
+			<string>C71BB9FE-4E97-4E22-A454-38F6A731D321</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>AllowAllAppsAccess</key>
+			<false/>
+			<key>KeyIsExtractable</key>
+			<true/>
+			<key>PayloadCertificateFileName</key>
+			<string>FortiClient DNS Root.cer</string>
+			<key>PayloadContent</key>
+			<data>
+			MIIEkDCCAvigAwIBAgIRAMoedyMP4hQcoCzRH7n8ozMwDQYJKoZI
+			hvcNAQELBQAwYDELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRIw
+			EAYDVQQHEwlTdW5ueXZhbGUxETAPBgNVBAoTCEZvcnRpbmV0MR0w
+			GwYDVQQDExRGb3J0aUNsaWVudCBETlMgUm9vdDAeFw0yMjA0Mjkx
+			ODQyNTVaFw0zMjA0MjkxODQyNTVaMGAxCzAJBgNVBAYTAlVTMQsw
+			CQYDVQQIEwJDQTESMBAGA1UEBxMJU3Vubnl2YWxlMREwDwYDVQQK
+			EwhGb3J0aW5ldDEdMBsGA1UEAxMURm9ydGlDbGllbnQgRE5TIFJv
+			b3QwggGiMA0GCSqGSIb3DQEBAQUAA4IBjwAwggGKAoIBgQDuhDIL
+			geV9h22CKDVeSNEALTr1gwCI43e0o1PrBOb+E0YvwCWM5keEGDnA
+			XrvMLub4XpWEnlC5O2b8Ql+AUX+P1ZxcgujSqV0gNVcBVsyE7EhE
+			lIhjN31lC8swQEUkLX7xgK9WWfFX+UjZkCO/152K6f0RO+8hRMf3
+			HOgaxdqCbIjeK1pDrTnpVt14pfI1Bgi5cI0+3oltoiOYmx527Qld
+			z6G9hnbuAYFNPBB+pUjaDG47SwKj5BFYhFf/eAsj8L2VKeYx0J9f
+			Xi7FH+ohRLp3oXAWyaFhtpCR6LnsAogkkoSGI1eVCd7Zg449gwmy
+			Ww/yYPrZLWdPZn4t65Kz4ZzCiLLN1DnKag8kVZnbx9fvvBOqbNnv
+			SJkz1CQrvGbi8LqTkqEafwKX0AMaKQ+cVXBMtVCWkQtrLY8aMzSM
+			6K8+BG35eSVX+fiqdZ0pvsNpDhnsHV/+xC8UlddiqT0RAR+1CcXL
+			ALE4+HVz02oZsOOy2ZbanzIynsj6hiUbt6aRMgsCAwEAAaNFMEMw
+			DgYDVR0PAQH/BAQDAgIEMBIGA1UdEwEB/wQIMAYBAf8CAQAwHQYD
+			VR0OBBYEFL+NpCLYF3opOSweBljeI81hD/jSMA0GCSqGSIb3DQEB
+			CwUAA4IBgQDjR/S5xE1ke4ZBkhi37K3ZcxO2orscU0+HDCPZAjMo
+			WWjvaMqZAEGLYGdRL99pyupHLIMUjCQ9paPB7CjPhTx9IPXCES2P
+			v6knxsR3hI5/Fg6ZH7Renb1OhyoqzPbuoRFJb6Ey03S/ftOsJmYG
+			34ub2VpuDVngtIGPbozI3D6JCqMQnsUoaWJ0xD6cDQa6iIHScfEJ
+			cRjUfK27hC7+Bj0WjnvRrAofBO1UOfwwzhTPFzqDBdzUsP5C4/o+
+			RD2f/tp8cPOqssAvsgZknML08kE9bXWEKh/ocKVMcKCkbnFzE/nW
+			ObhCGN+mjeypbmHX9KO97PfMWl9I26KZNL4kNCph/6hTYvqyGP+S
+			Js/UZiwt4JLMuujjDqnPkpzz/8YLnjc5+NoR7qwAFMRM0oGJtWVu
+			0u42COYFqutcj4ULmgmZaLt/fBT6IGZfOtRsylT9wwnoasF2gHV6
+			992RhnZaLsc6ouewxwDkM9x0MYXNPcYvlyry3+KM4zVoAWkXPxAo
+			tYE=
+			</data>
+			<key>PayloadDescription</key>
+			<string>Adds a CA root certificate</string>
+			<key>PayloadDisplayName</key>
+			<string>FortiClient DNS Root</string>
+			<key>PayloadEnabled</key>
+			<true/>
+			<key>PayloadIdentifier</key>
+			<string>5C9C68BD-C714-470B-9FB3-18D812806705</string>
+			<key>PayloadOrganization</key>
+			<string>Online Grafics</string>
+			<key>PayloadType</key>
+			<string>com.apple.security.root</string>
+			<key>PayloadUUID</key>
+			<string>5C9C68BD-C714-470B-9FB3-18D812806705</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>PayloadDisplayName</key>
+			<string>Managed Login Items</string>
+			<key>PayloadIdentifier</key>
+			<string>B3430ADB-5659-422E-81F2-5C35F78C5A5D</string>
+			<key>PayloadOrganization</key>
+			<string>JAMF Software</string>
+			<key>PayloadType</key>
+			<string>com.apple.servicemanagement</string>
+			<key>PayloadUUID</key>
+			<string>B3430ADB-5659-422E-81F2-5C35F78C5A5D</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Rules</key>
+			<array>
+				<dict>
+					<key>Comment</key>
+					<string>Allow FortiClient managed login items.</string>
+					<key>RuleType</key>
+					<string>TeamIdentifier</string>
+					<key>RuleValue</key>
+					<string>AH4XFXJ7DK</string>
+				</dict>
+			</array>
+		</dict>
+		<dict>
+			<key>NotificationSettings</key>
+			<array>
+				<dict>
+					<key>AlertType</key>
+					<integer>1</integer>
+					<key>BadgesEnabled</key>
+					<true/>
+					<key>BundleIdentifier</key>
+					<string>com.fortinet.FortiClient</string>
+					<key>CriticalAlertEnabled</key>
+					<true/>
+					<key>NotificationsEnabled</key>
+					<true/>
+					<key>ShowInLockScreen</key>
+					<true/>
+					<key>ShowInNotificationCenter</key>
+					<true/>
+					<key>SoundsEnabled</key>
+					<true/>
+				</dict>
+			</array>
+			<key>PayloadDisplayName</key>
+			<string>Notifications Payload</string>
+			<key>PayloadIdentifier</key>
+			<string>0C6BB74F-0650-41B2-B785-71353C90B655</string>
+			<key>PayloadOrganization</key>
+			<string>JAMF Software</string>
+			<key>PayloadType</key>
+			<string>com.apple.notificationsettings</string>
+			<key>PayloadUUID</key>
+			<string>AE291E83-428B-4A7B-A9F7-418BF765169B</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string></string>
+	<key>PayloadDisplayName</key>
+	<string>FortiClient PPPC (version &gt; 7.2)</string>
+	<key>PayloadEnabled</key>
+	<true/>
+	<key>PayloadIdentifier</key>
+	<string>22B7308F-5929-499F-A70A-93814DF8F55A</string>
+	<key>PayloadOrganization</key>
+	<string>Lab9 Pro</string>
+	<key>PayloadRemovalDisallowed</key>
+	<true/>
+	<key>PayloadScope</key>
+	<string>System</string>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>22B7308F-5929-499F-A70A-93814DF8F55A</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>
