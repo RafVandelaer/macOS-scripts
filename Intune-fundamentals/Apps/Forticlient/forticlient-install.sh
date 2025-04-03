@@ -1,9 +1,10 @@
 #!/bin/bash
 #Log, Configs, WEB URL
 
-weburl="https://www.dropbox.com/scl/fi/dnmm9xdis41x55j73wsw1/FortiClientVPNSetup_7.4.2.1717_macosx.dmg?rlkey=13hu0rtc9rjc3j8lqse8nsewz&d=1" # Replace with your own URL path
+weburl="https://www.dropbox.com/scl/fi/ra9gf8gp2v8sg5yxijijg/FortiClientVPN.dmg?rlkey=6izuoajxc9l8m6c778q69pk15&dl=1" # Replace with your own URL path
 
 FortiClient_Installerversion="7421717" #Enter your FortiClient installer version using version and build number. e.g FortiClient 7.2.2 would be value "7220776"
+SKIP_VERSION_CHECK=1 # Set to 1 to skip version check, 0 to enforce version check
 
 # Configuration variables - modify these as needed
 VPN_NAME="NAME"
@@ -132,8 +133,12 @@ elif [[ $uninstall == 0 ]]; then
     FortiClient_version="$(grep -A1 'version=' /Library/Application\ Support/Fortinet/FortiClient/conf/fctinfo | sed 's/.*=//' | tr -d '.')"
     echo "Current FortiClient Version = ${FortiClient_version}"
 
-        # Comparing FortiClient version
-        if [[ "$FortiClient_version" == *"$FortiClient_Installerversion"* ]]; then
+        # Comparing FortiClient version - now with skip option
+        if [[ $SKIP_VERSION_CHECK == 1 ]] || [[ "$FortiClient_version" == *"$FortiClient_Installerversion"* ]]; then
+            
+            if [[ $SKIP_VERSION_CHECK == 1 ]]; then
+                echo "Version check skipped as SKIP_VERSION_CHECK=1"
+            fi
 
             #Checking FCT is only-VPN or Full version
             if [ -f "/Library/Application Support/Fortinet/FortiClient/bin/epctrl" ]; then

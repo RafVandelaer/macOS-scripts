@@ -1,3 +1,5 @@
+#Uses the SPO-versionbatchdelete to delete older versions of files
+
 # Variables
 $installerUrl = "https://www.microsoft.com/en-us/download/details.aspx?id=35588"
 $installerPath = "$env:TEMP\SharePointOnlineManagementShell.msi"
