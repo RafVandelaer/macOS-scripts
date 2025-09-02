@@ -73,5 +73,5 @@ Try {
     }
 }
 Catch {
-    Write-Host -ForegroundColor Red "❌ Fout bij het ophalen van documentbibliotheken: $($_.Exception.Message)"
+    Write-Host -ForegroundColor Red "Fout bij het ophalen van documentbibliotheken: $($_.Exception.Message)"
 }
