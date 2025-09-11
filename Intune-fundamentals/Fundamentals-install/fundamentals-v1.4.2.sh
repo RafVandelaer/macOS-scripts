@@ -200,13 +200,34 @@ EOF
 
 ############################################### Main #############################################
 main() {
-    # Bepaal huidige console user + home + firstrun-pad (nu in ~/Lab9Pro/)
+    # Bepaal huidige console user + home
     currentUser="$(stat -f "%Su" /dev/console)"
     userHome="$(dscl . -read /Users/"$currentUser" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
     [[ -z "$userHome" ]] && userHome="/Users/$currentUser"
+
+    # Paden
     userLab9Dir="$userHome/Lab9Pro"
+    firstrunUser="$userLab9Dir/firstrun"           # nieuwe/definitieve locatie
+    sharedFirstrun="/Users/Shared/Lab9Pro/firstrun" # legacy locatie
+
+    # Zorg dat user-map bestaat
     mkdir -p "$userLab9Dir"
-    firstrun="$userLab9Dir/firstrun"
+
+    # === LEGACY → USER MIGRATIE VAN 'firstrun' ===
+    # Als legacy marker bestaat, kopieer dan naar user-locatie en verwijder legacy
+    if [[ -f "$sharedFirstrun" ]]; then
+        if [[ ! -f "$firstrunUser" ]]; then
+            logging "Legacy firstrun gevonden in Shared. Migreren naar $firstrunUser…"
+            # probeer met 'install -p' (preserve timestamps), val terug op 'cp -p'
+            /usr/bin/install -p "$sharedFirstrun" "$firstrunUser" 2>/dev/null || cp -p "$sharedFirstrun" "$firstrunUser"
+            chmod 644 "$firstrunUser" 2>/dev/null || true
+        else
+            logging "Zowel legacy als user firstrun aanwezig; user-variant behoudt de waarheid."
+        fi
+        rm -f "$sharedFirstrun" 2>/dev/null || true
+    fi
+
+    # ==== Vanaf hier enkel nog met $firstrunUser werken ====
 
     # ADE check + tijdelijke bypass (verwijder '|| true' om echte check te forceren)
     isDEP="$(profiles status -type enrollment | grep 'DEP')"
@@ -219,13 +240,14 @@ main() {
         done
         logging "Dock is here, lets carry on"
 
-        if [[ -f "$firstrun" ]]; then
-            logging "Not first run -> run auto-updater. Check autopatch-lab9pro.log for more info."
+        if [[ -f "$firstrunUser" ]]; then
+            logging "Not first run (user firstrun bestaat) -> auto-updater."
             runAutoUpdater
             checkAndSetWallpaper
         else
             logging "First run... Installing all apps and running SwiftDialog."
-            : > "$firstrun"  # maak firstrun in ~/Lab9Pro/
+            : > "$firstrunUser"   # maak user-marker aan
+
             downloadAndInstallInstallomator
 
             # Tools die we nodig hebben
@@ -266,6 +288,7 @@ main() {
 
     caffexit 0
 }
+
 
 ############################################### Dock ###############################################
 createDockV2(){
