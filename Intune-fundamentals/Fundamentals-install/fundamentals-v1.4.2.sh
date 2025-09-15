@@ -21,6 +21,9 @@
 
 ########################################### Parameters to modify #########################################################
 
+        #With this check, you enable debug mode which overrides the ADE check. This is only to be used in test environments.
+        debugEnrollment=1
+
 
 		#check in the intake document if the customer would like to demote the current enduser to standard user (non admin).
 		#if so, change the following variable to 1, otherwise set to 0.
@@ -231,7 +234,7 @@ main() {
 
     # ADE check + tijdelijke bypass (verwijder '|| true' om echte check te forceren)
     isDEP="$(profiles status -type enrollment | grep 'DEP')"
-    if [[ $isDEP == *"Yes"* ]]; then
+    if [[ $isDEP == *"Yes"* || $debugEnrollment == 1 ]]; then
         logging "Proceeding (DEP check passed of bypass actief)."
         until pgrep -fq "/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock"; do
             delay=$(( RANDOM % 50 + 10 ))
