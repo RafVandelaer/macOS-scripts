@@ -1,5 +1,5 @@
 #!/bin/zsh
-
+#v1.4.3
 
 #############################################################################################################
 #                                      Created by Raf Vandelaer                                             #
@@ -21,8 +21,9 @@
 
 ########################################### Parameters to modify #########################################################
 
-        #With this check, you enable debug mode which overrides the ADE check. This is only to be used in test environments.
-        debugEnrollment=1
+        #With this check, you enable debug mode which overrides the ADE check and the connection test (virtualbuddy issue)
+        # !! This is only to be used in test environments.
+        debugEnrollment=0
 
 
 		#check in the intake document if the customer would like to demote the current enduser to standard user (non admin).
@@ -77,7 +78,7 @@ maxDeferrals="${9:-"3"}"
 
 # ===== SwiftDialog UI i.p.v. DEPNotify =====
 title="Installeren van apps"
-message="Gelieve even te wachten, de apps worden gedownload en geïnstalleerd. U kan het toestel in beperkte mate gebruiken."
+message="Gelieve even te wachten, de apps worden gedownload en geïnstalleerd..."
 endMessage="Installatie klaar! Custom aangevraagde apps worden later geïnstalleerd."
 errorMessage="Er was een probleem met de installatie van de apps. Gelieve IT te contacteren."
 
@@ -408,11 +409,15 @@ configDialog(){
     log_message="$instance: Installomator 1st with SwiftDialog, v$scriptVersion"
     printlog "[LOG-BEGIN] ${log_message}"
 
-    # Internet check (1.1.1.1:53)
-    if [[ "$(nc -z -v -G 10 1.1.1.1 53 2>&1 | grep -io "succeeded")" != "succeeded" ]]; then
-        printlog "ERROR. No internet connection, we cannot continue."
-        exit 90
+    if [[ "$debugEnrollment" != "1" ]]; then
+        if [[ "$(nc -z -v -G 10 1.1.1.1 53 2>&1 | grep -io "succeeded")" != "succeeded" ]]; then
+            printlog "ERROR. No internet connection, we cannot continue."
+            exit 90
+        fi
+    else
+        printlog "DEBUG: Internet check skipped (debug enrollment)."
     fi
+
 
     # Caffeinate
     /usr/bin/caffeinate -d -i -m -u &
