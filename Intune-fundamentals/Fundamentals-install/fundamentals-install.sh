@@ -237,11 +237,11 @@ main() {
     isDEP="$(profiles status -type enrollment | grep 'DEP')"
     if [[ $isDEP == *"Yes"* || $debugEnrollment == 1 ]]; then
         logging "Proceeding (DEP check passed of bypass actief)."
-        until pgrep -fq "/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock"; do
-            delay=$(( RANDOM % 50 + 10 ))
+        until ps aux | grep /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock | grep -v grep &>/dev/null; do
+            delay=$(( $RANDOM % 50 + 10 ))
             echo "$(date) |  + Dock not running, waiting [$delay] seconds"
             sleep $delay
-        done
+	    done
         logging "Dock is here, lets carry on"
 
         if [[ -f "$firstrunUser" ]]; then
