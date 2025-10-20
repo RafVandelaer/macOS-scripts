@@ -122,7 +122,7 @@ mkdir -p "$sharedDir" "$helperDir"
 #################################### Notifications profile for SwiftDialog #######################
 # Installeert automatisch een meldingen-profiel zodat SwiftDialog banners/sound/badges mag tonen.
 ensure_swiftdialog_notifications_profile() {
-    local profile_id="be.jbits.notifications.swiftdialog"
+    local profile_id="be.etest.notifications.swiftdialog"
     local tmp_profile="/var/tmp/${profile_id}.mobileconfig"
 
     if profiles list -type configuration 2>/dev/null | grep -q "$profile_id"; then
@@ -271,7 +271,7 @@ main() {
             # Optioneel: Privileges
             if [[ $isAllowedToBecomeAdmin -eq 1 ]] ; then
                 installomatorInstall privileges2
-                install-privileges-helper
+                install-privileges-helper2
                 dockitems+=("/Applications/Privileges.app")
             fi
 
@@ -565,6 +565,14 @@ EOF
             echo "/Applications/Privileges.app/Contents/Resources" > "/private/etc/paths.d/PrivilegesCLI"
         fi
     fi
+}
+
+install-privileges-helper2(){
+	if [ ! -f /Library/PrivilegedHelperTools/corp.sap.privileges.helper ]; then
+    	/Applications/Privileges.app/Contents/Resources/PrivilegesCLI --install-helper
+	fi
+
+
 }
 
 ############################################### Installomator bootstrap ##########################
