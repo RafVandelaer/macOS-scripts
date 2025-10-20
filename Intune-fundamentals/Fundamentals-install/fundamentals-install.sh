@@ -143,7 +143,7 @@ ensure_swiftdialog_notifications_profile() {
       <key>PayloadVersion</key>
       <integer>1</integer>
       <key>PayloadIdentifier</key>
-      <string>be.jbits.notifications.swiftdialog.payload</string>
+      <string>be.test.notifications.swiftdialog.payload</string>
       <key>PayloadUUID</key>
       <string>3E4A6F9C-8C7A-4D3E-9E3B-9C8C3A7A1B21</string>
       <key>PayloadDisplayName</key>
@@ -176,9 +176,9 @@ ensure_swiftdialog_notifications_profile() {
   <key>PayloadDisplayName</key>
   <string>SwiftDialog - Notifications</string>
   <key>PayloadIdentifier</key>
-  <string>be.jbits.notifications.swiftdialog</string>
+  <string>be.test.notifications.swiftdialog</string>
   <key>PayloadOrganization</key>
-  <string>Jbits</string>
+  <string>Test</string>
   <key>PayloadRemovalDisallowed</key>
   <false/>
   <key>PayloadType</key>
