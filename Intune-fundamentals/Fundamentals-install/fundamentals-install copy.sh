@@ -1,5 +1,5 @@
 #!/bin/zsh
-#v1.4.4
+#v1.4.3
 
 #############################################################################################################
 #                                      Created by Raf Vandelaer                                             #
@@ -23,7 +23,7 @@
 
         #With this check, you enable debug mode which overrides the ADE check and the connection test (virtualbuddy issue)
         # !! This is only to be used in test environments.
-        debugEnrollment=1
+        debugEnrollment=0
 
 
 		#check in the intake document if the customer would like to demote the current enduser to standard user (non admin).
@@ -216,8 +216,7 @@ main() {
 
     # Zorg dat user-map bestaat
     mkdir -p "$userLab9Dir"
-    # Zorg dat de map eigenaar is van de gedetecteerde gebruiker (voor het geval script als root draait)
-    chown "$currentUser":staff "$userLab9Dir" 2>/dev/null || true
+
     # === LEGACY → USER MIGRATIE VAN 'firstrun' ===
     # Als legacy marker bestaat, kopieer dan naar user-locatie en verwijder legacy
     if [[ -f "$sharedFirstrun" ]]; then
@@ -252,8 +251,6 @@ main() {
         else
             logging "First run... Installing all apps and running SwiftDialog."
             : > "$firstrunUser"   # maak user-marker aan
-            chown "$currentUser":staff "$firstrunUser" 2>/dev/null || true
-+           chmod 644 "$firstrunUser" 2>/dev/null || true
 
             downloadAndInstallInstallomator
 
