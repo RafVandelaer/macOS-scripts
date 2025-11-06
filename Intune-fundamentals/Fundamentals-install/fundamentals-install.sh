@@ -1,5 +1,5 @@
 #!/bin/zsh
-#v1.4.4
+#v1.5
 
 #############################################################################################################
 #                                      Created by Raf Vandelaer                                             #
@@ -204,28 +204,43 @@ EOF
 
 ############################################### Main #############################################
 main() {
-    # Bepaal huidige console user + home
-    currentUser="$(stat -f "%Su" /dev/console)"
+    logging "Starting main execution..."
+
+    # Wacht tot er een actieve gebruikerssessie is (Dock is teken van login)
+    until ps aux | grep -q "[D]ock.app/Contents/MacOS/Dock"; do
+        delay=$((RANDOM % 10 + 5))
+        logging "Dock not running yet, waiting ${delay}s..."
+        sleep $delay
+    done
+
+    # Detecteer echte console user (geen root of _mbsetupuser)
+    currentUser="$(stat -f '%Su' /dev/console)"
+    while [[ "$currentUser" == "root" || "$currentUser" == "_mbsetupuser" || -z "$currentUser" ]]; do
+        logging "Waiting for real user session (currentUser=$currentUser)..."
+        sleep 2
+        currentUser="$(stat -f '%Su' /dev/console)"
+    done
+
     userHome="$(dscl . -read /Users/"$currentUser" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
     [[ -z "$userHome" ]] && userHome="/Users/$currentUser"
 
-    # Paden
-    userLab9Dir="$userHome/Lab9Pro"
-    firstrunUser="$userLab9Dir/firstrun"           # nieuwe/definitieve locatie
-    sharedFirstrun="/Users/Shared/Lab9Pro/firstrun" # legacy locatie
+    logging "Active console user detected: $currentUser ($userHome)"
 
-    # Zorg dat user-map bestaat
+    # Paden instellen
+    userLab9Dir="$userHome/Lab9Pro"
+    firstrunUser="$userLab9Dir/firstrun"
+    sharedFirstrun="/Users/Shared/Lab9Pro/firstrun"
+
     mkdir -p "$userLab9Dir"
-    # Zorg dat de map eigenaar is van de gedetecteerde gebruiker (voor het geval script als root draait)
     chown "$currentUser":staff "$userLab9Dir" 2>/dev/null || true
+
     # === LEGACY → USER MIGRATIE VAN 'firstrun' ===
-    # Als legacy marker bestaat, kopieer dan naar user-locatie en verwijder legacy
     if [[ -f "$sharedFirstrun" ]]; then
         if [[ ! -f "$firstrunUser" ]]; then
-            logging "Legacy firstrun gevonden in Shared. Migreren naar $firstrunUser…"
-            # probeer met 'install -p' (preserve timestamps), val terug op 'cp -p'
+            logging "Legacy firstrun gevonden in Shared. Migreren naar $firstrunUser..."
             /usr/bin/install -p "$sharedFirstrun" "$firstrunUser" 2>/dev/null || cp -p "$sharedFirstrun" "$firstrunUser"
             chmod 644 "$firstrunUser" 2>/dev/null || true
+            chown "$currentUser":staff "$firstrunUser" 2>/dev/null || true
         else
             logging "Zowel legacy als user firstrun aanwezig; user-variant behoudt de waarheid."
         fi
@@ -233,27 +248,23 @@ main() {
     fi
 
     # ==== Vanaf hier enkel nog met $firstrunUser werken ====
+    logging "Using firstrun marker at: $firstrunUser"
 
-    # ADE check + tijdelijke bypass (verwijder '|| true' om echte check te forceren)
+    # ADE check + tijdelijke bypass (debugEnrollment)
     isDEP="$(profiles status -type enrollment | grep 'DEP')"
     if [[ $isDEP == *"Yes"* || $debugEnrollment == 1 ]]; then
-        logging "Proceeding (DEP check passed of bypass actief)."
-        until ps aux | grep /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock | grep -v grep &>/dev/null; do
-            delay=$(( $RANDOM % 50 + 10 ))
-            echo "$(date) |  + Dock not running, waiting [$delay] seconds"
-            sleep $delay
-	    done
-        logging "Dock is here, lets carry on"
+        logging "Proceeding (DEP check passed of debugEnrollment actief)."
+        logging "Dock is actief, carry on..."
 
         if [[ -f "$firstrunUser" ]]; then
-            logging "Not first run (user firstrun bestaat) -> auto-updater."
+            logging "Not first run (firstrun marker bestaat) -> auto-updater only."
             runAutoUpdater
             checkAndSetWallpaper
         else
             logging "First run... Installing all apps and running SwiftDialog."
-            : > "$firstrunUser"   # maak user-marker aan
+            : > "$firstrunUser"
             chown "$currentUser":staff "$firstrunUser" 2>/dev/null || true
-+           chmod 644 "$firstrunUser" 2>/dev/null || true
+            chmod 644 "$firstrunUser" 2>/dev/null || true
 
             downloadAndInstallInstallomator
 
@@ -261,18 +272,15 @@ main() {
             items+=("dockutil" "desktoppr" "swiftdialog")
             ((countLabels+=3))
 
-            # Installeer SwiftDialog vooraf en zet meldingen-profiel
             installomatorInstall swiftdialog
             ensure_swiftdialog_notifications_profile
 
-            # Start UI (geen OK-knop tijdens installatie)
             configDialog
             startDialog
             logging "Items (${#items[@]}) to install: ${items[*]}"
             runDialogInstallations
 
-            # Optioneel: Privileges
-            if [[ $isAllowedToBecomeAdmin -eq 1 ]] ; then
+            if [[ $isAllowedToBecomeAdmin -eq 1 ]]; then
                 installomatorInstall privileges2
                 install-privileges-helper2
                 dockitems+=("/Applications/Privileges.app")
@@ -281,13 +289,13 @@ main() {
             checkAndSetWallpaper
             demoteUserToStandard $demoteUser
 
-            if [[ $changeDock -eq 1 ]] ; then
+            if [[ $changeDock -eq 1 ]]; then
                 logging "Customizing dock..."
                 createDockV2
             fi
 
             endDialog
-            logging "All done for now"
+            logging "All done for now."
         fi
     else
         logging "No DEP enrollment. Skipping..."
@@ -295,6 +303,7 @@ main() {
 
     caffexit 0
 }
+
 
 
 ############################################### Dock ###############################################
@@ -642,9 +651,35 @@ downloadAndInstallInstallomator() {
         printlog "$name version $appNewVersion already installed."
     fi
 }
+housekeeping_check_firstrun() {
+    logging "---- Housekeeping check ----"
+    
+    currentUser="$(stat -f "%Su" /dev/console)"
+    userHome="$(dscl . -read /Users/"$currentUser" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+    [[ -z "$userHome" ]] && userHome="/Users/$currentUser"
+    firstrunExpected="$userHome/Lab9Pro/firstrun"
+
+    logging "Console user  : $currentUser"
+    logging "User home     : $userHome"
+    logging "Expected path : $firstrunExpected"
+
+    if [[ -f "$firstrunExpected" ]]; then
+        owner="$(stat -f "%Su" "$firstrunExpected" 2>/dev/null)"
+        perms="$(stat -f "%Lp" "$firstrunExpected" 2>/dev/null)"
+        logging "firstrun file FOUND. Owner=$owner, Permissions=$perms"
+    else
+        logging "firstrun file NOT found for $currentUser"
+        if [[ -f "/Users/Shared/Lab9Pro/firstrun" ]]; then
+            logging "Legacy marker detected in /Users/Shared/Lab9Pro/firstrun"
+        fi
+    fi
+    logging "---- End housekeeping ----"
+}
+
 
 ############################################### Housekeeping #####################################
 caffexit () {
+    housekeeping_check_firstrun
     kill "$caffeinatepid" 2>/dev/null || true
     printlog "[LOG-END] Status $1"
     exit $1
