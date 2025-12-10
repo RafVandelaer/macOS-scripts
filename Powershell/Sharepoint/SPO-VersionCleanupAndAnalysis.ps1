@@ -9,13 +9,12 @@
 #
 # 2) Analyze  
 #    - Connect to SharePoint Online directly
-#    - Analyze versions from all sites
+#    - Analyze storage usage from all sites
 #    - Generate HTML report
 #
 # REQUIREMENTS
 # - Windows PowerShell 5.1
 # - Module: Microsoft.Online.SharePoint.PowerShell
-# - Module: PnP.PowerShell (for Analyze mode)
 #
 # USAGE
 # - Interactive: .\SPO-VersionCleanupAndAnalysis.ps1
@@ -361,47 +360,32 @@ function Run-Analyze {
 
     foreach ($site in $sites) {
         $siteIndex = ($sites.IndexOf($site) + 1)
+        
+        if ($excludedSites -contains $site.Url) {
+            Log ("[" + $siteIndex + "/" + $sites.Count + "] SKIPPED (excluded): $($site.Url)")
+            continue
+        }
+        
         Log ("[" + $siteIndex + "/" + $sites.Count + "] Analyzing: $($site.Url)")
 
         try {
-            $versionReport = Get-SPOSiteFileVersionExpirationReport -Identity $site.Url -ErrorAction SilentlyContinue
+            $siteQuota = Get-SPOSite -Identity $site.Url -Detailed -ErrorAction SilentlyContinue
             
-            if ($versionReport) {
-                $totalVersions = 0
-                $olderCount = 0
-                $totalSizeBytes = 0
-                $olderSizeBytes = 0
+            if ($siteQuota) {
+                $usedSpace = $siteQuota.StorageUsageCurrent
+                $siteGB = [math]::Round($usedSpace / 1024, 2)
                 
-                foreach ($item in $versionReport) {
-                    if ($item.FileCount -gt 0) {
-                        $totalVersions += [int]$item.VersionCount
-                        $totalSizeBytes += [long]$item.VersionSize
-                        
-                        if ($item.LastModifiedDate) {
-                            $lastModDate = [datetime]::Parse($item.LastModifiedDate)
-                            if ($lastModDate -lt $cutoffDate) {
-                                $olderCount += [int]$item.VersionCount
-                                $olderSizeBytes += [long]$item.VersionSize
-                            }
-                        }
-                    }
-                }
-                
-                if ($totalVersions -gt 0) {
-                    $totalGB = [math]::Round($totalSizeBytes / 1GB, 2)
-                    $olderGB = [math]::Round($olderSizeBytes / 1GB, 2)
-                    Log ("  Found: " + $totalVersions + " versions, " + $totalGB + " GB (Older: " + $olderCount + ", " + $olderGB + " GB)")
+                Log ("  Site storage: $siteGB GB")
 
-                    $summary = [PSCustomObject]@{
-                        SiteUrl              = $site.Url
-                        SiteTitle            = $site.Title
-                        TotalVersions        = $totalVersions
-                        VersionsOlderThanX   = $olderCount
-                        TotalSizeGB          = $totalGB
-                        OlderSizeGB          = $olderGB
-                    }
-                    $siteSummaries += $summary
+                $summary = [PSCustomObject]@{
+                    SiteUrl              = $site.Url
+                    SiteTitle            = $site.Title
+                    TotalVersions        = "N/A"
+                    VersionsOlderThanX   = "N/A"
+                    TotalSizeGB          = $siteGB
+                    OlderSizeGB          = "N/A"
                 }
+                $siteSummaries += $summary
             }
         }
         catch {
