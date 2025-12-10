@@ -349,13 +349,6 @@ function Run-Analyze {
     }
     Log "SPO module found"
 
-    if (-not (Get-Module -ListAvailable -Name PnP.PowerShell)) {
-        Write-Host "Installing PnP.PowerShell..." -ForegroundColor Yellow
-        Install-Module PnP.PowerShell -Force -Scope CurrentUser -AllowClobber
-        Log "PnP.PowerShell installed"
-    }
-    Log "PnP.PowerShell module found"
-
     Log "Connecting to SharePoint Online Admin..."
     Connect-SPOService -Url $adminUrl
 
@@ -370,73 +363,49 @@ function Run-Analyze {
         $siteIndex = ($sites.IndexOf($site) + 1)
         Log ("[" + $siteIndex + "/" + $sites.Count + "] Analyzing: $($site.Url)")
 
-        $totalVersions = 0
-        $olderCount = 0
-        $totalSizeBytes = 0
-        $olderSizeBytes = 0
-
         try {
-            Connect-PnPOnline -Url $site.Url -Interactive -ErrorAction SilentlyContinue
+            $versionReport = Get-SPOSiteFileVersionExpirationReport -Identity $site.Url -ErrorAction SilentlyContinue
             
-            if ($?) {
-                $lists = Get-PnPList -Includes BaseType, ItemCount -ErrorAction SilentlyContinue
+            if ($versionReport) {
+                $totalVersions = 0
+                $olderCount = 0
+                $totalSizeBytes = 0
+                $olderSizeBytes = 0
                 
-                foreach ($list in $lists) {
-                    if ($list.BaseType -eq "DocumentLibrary" -and $list.ItemCount -gt 0) {
-                        try {
-                            $items = Get-PnPListItem -List $list.Id -PageSize 5000 -ErrorAction SilentlyContinue
-                            
-                            foreach ($item in $items) {
-                                if ($item["FileLeafRef"]) {
-                                    try {
-                                        $versions = Get-PnPFileVersion -Url $item["FileRef"] -ErrorAction SilentlyContinue
-                                        
-                                        foreach ($version in $versions) {
-                                            $totalVersions++
-                                            $versionSize = 0
-                                            if ($version.PSObject.Properties["Size"]) {
-                                                [double]::TryParse($version.Size, [ref]$versionSize) | Out-Null
-                                            }
-                                            $totalSizeBytes += $versionSize
-                                            
-                                            $versionDate = [datetime]::MinValue
-                                            if ($version.PSObject.Properties["Created"]) {
-                                                [datetime]::TryParse($version.Created, [ref]$versionDate) | Out-Null
-                                            }
-                                            
-                                            if ($versionDate -lt $cutoffDate) {
-                                                $olderCount++
-                                                $olderSizeBytes += $versionSize
-                                            }
-                                        }
-                                    }
-                                    catch { }
-                                }
+                foreach ($item in $versionReport) {
+                    if ($item.FileCount -gt 0) {
+                        $totalVersions += [int]$item.VersionCount
+                        $totalSizeBytes += [long]$item.VersionSize
+                        
+                        if ($item.LastModifiedDate) {
+                            $lastModDate = [datetime]::Parse($item.LastModifiedDate)
+                            if ($lastModDate -lt $cutoffDate) {
+                                $olderCount += [int]$item.VersionCount
+                                $olderSizeBytes += [long]$item.VersionSize
                             }
                         }
-                        catch { }
                     }
                 }
+                
+                if ($totalVersions -gt 0) {
+                    $totalGB = [math]::Round($totalSizeBytes / 1GB, 2)
+                    $olderGB = [math]::Round($olderSizeBytes / 1GB, 2)
+                    Log ("  Found: " + $totalVersions + " versions, " + $totalGB + " GB (Older: " + $olderCount + ", " + $olderGB + " GB)")
+
+                    $summary = [PSCustomObject]@{
+                        SiteUrl              = $site.Url
+                        SiteTitle            = $site.Title
+                        TotalVersions        = $totalVersions
+                        VersionsOlderThanX   = $olderCount
+                        TotalSizeGB          = $totalGB
+                        OlderSizeGB          = $olderGB
+                    }
+                    $siteSummaries += $summary
+                }
             }
-            
-            Disconnect-PnPOnline -ErrorAction SilentlyContinue
         }
-        catch { }
-
-        if ($totalVersions -gt 0) {
-            $totalGB = [math]::Round($totalSizeBytes / 1GB, 2)
-            $olderGB = [math]::Round($olderSizeBytes / 1GB, 2)
-            Log ("  Found: " + $totalVersions + " versions, " + $totalGB + " GB (Older: " + $olderCount + ", " + $olderGB + " GB)")
-
-            $summary = [PSCustomObject]@{
-                SiteUrl              = $site.Url
-                SiteTitle            = $site.Title
-                TotalVersions        = $totalVersions
-                VersionsOlderThanX   = $olderCount
-                TotalSizeGB          = $totalGB
-                OlderSizeGB          = $olderGB
-            }
-            $siteSummaries += $summary
+        catch {
+            Log ("  [WARN] Could not analyze: " + $_)
         }
     }
 
