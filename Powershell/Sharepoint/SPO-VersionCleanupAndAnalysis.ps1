@@ -185,9 +185,9 @@ if ($Interactive) {
                         $siteUrl = $siteUrl.Trim()
                         if ($siteUrl -match "^https://.*\.sharepoint\.com(/.*)?$") {
                             $newExclusions += $siteUrl
-                            Write-Host "  ✓ Added: $siteUrl" -ForegroundColor Green
+                            Write-Host "  [OK] Added: $siteUrl" -ForegroundColor Green
                         } else {
-                            Write-Host "  ✗ Invalid URL format. Must be: https://[TENANT].sharepoint.com[/sites/NAME]" -ForegroundColor Red
+                            Write-Host "  [ERROR] Invalid URL format. Must be: https://[TENANT].sharepoint.com[/sites/NAME]" -ForegroundColor Red
                         }
                     }
                 } while (-not [string]::IsNullOrWhiteSpace($siteUrl))
@@ -273,12 +273,12 @@ function Run-Cleanup {
 
     foreach ($site in $sites) {
         if ($excludedSites -contains $site.Url) {
-            Log ("[SKIPPED] " + $site.Url)
+            Log ("[SKIPPED] $($site.Url)")
             $skippedCount++
             continue
         }
 
-        Log ("[" + ($processedCount + 1) + "/" + $sites.Count + "] Processing: " + $site.Url)
+        Log ("[" + ($processedCount + 1) + "/" + $sites.Count + "] Processing: $($site.Url)")
         $siteHadError = $false
 
         if ($DryRun) {
@@ -287,10 +287,10 @@ function Run-Cleanup {
         else {
             try {
                 Set-SPOSite -Identity $site.Url -EnableAutoExpirationVersionTrim $true -ApplyToExistingDocumentLibraries -Confirm:$false
-                Log "  ✓ Automatic trimming applied"
+                Log "  [OK] Automatic trimming applied"
             }
             catch {
-                Log ("  ✗ ERROR applying trimming: " + $_)
+                Log ("  [ERROR] Applying trimming: " + $_)
                 $siteHadError = $true
                 $errorCount++
             }
@@ -302,10 +302,10 @@ function Run-Cleanup {
         else {
             try {
                 New-SPOSiteFileVersionBatchDeleteJob -Identity $site.Url -DeleteBeforeDays $RetentionDays -Confirm:$false
-                Log ("  ✓ Cleanup job started")
+                Log ("  [OK] Cleanup job started")
             }
             catch {
-                Log ("  ✗ ERROR starting cleanup job: " + $_)
+                Log ("  [ERROR] Starting cleanup job: " + $_)
                 $siteHadError = $true
                 $errorCount++
             }
@@ -368,7 +368,7 @@ function Run-Analyze {
 
     foreach ($site in $sites) {
         $siteIndex = ($sites.IndexOf($site) + 1)
-        Log ("[" + $siteIndex + "/" + $sites.Count + "] Analyzing: " + $site.Url)
+        Log ("[" + $siteIndex + "/" + $sites.Count + "] Analyzing: $($site.Url)")
 
         $totalVersions = 0
         $olderCount = 0
@@ -450,12 +450,11 @@ function Run-Analyze {
             New-Item -ItemType Directory -Path $htmlDir -Force | Out-Null
         }
 
-        $html = @"
-<!DOCTYPE html>
+        $htmlContent = '<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>SharePoint Version Analysis - $TenantName</title>
+<title>SharePoint Version Analysis - ' + $TenantName + '</title>
 <style>
 body { font-family: Arial, sans-serif; background: #f5f7fb; margin: 0; padding: 20px; color: #222; }
 .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -476,10 +475,10 @@ th { font-weight: 600; }
 <div class="container">
 <h1>SharePoint Version Analysis</h1>
 <div class="meta">
-    Tenant: <strong>$TenantName</strong><br/>
-    Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")<br/>
-    Cutoff: Versions older than $RetentionDays days<br/>
-    Total sites analyzed: <strong>$($siteSummaries.Count)</strong>
+    Tenant: <strong>' + $TenantName + '</strong><br/>
+    Generated: ' + (Get-Date -Format "yyyy-MM-dd HH:mm:ss") + '<br/>
+    Cutoff: Versions older than ' + $RetentionDays + ' days<br/>
+    Total sites analyzed: <strong>' + $siteSummaries.Count + '</strong>
 </div>
 <table>
 <thead>
@@ -487,43 +486,40 @@ th { font-weight: 600; }
     <th>Site URL</th>
     <th>Site Title</th>
     <th class="number">Total Versions</th>
-    <th class="number">Versions > $RetentionDays days</th>
+    <th class="number">Versions &gt; ' + $RetentionDays + ' days</th>
     <th class="number">Total Size (GB)</th>
     <th class="number">Older Size (GB)</th>
 </tr>
 </thead>
-<tbody>
-"@
+<tbody>'
 
         foreach ($s in $siteSummaries) {
             $olderClass = if ($s.OlderSizeGB -ge 1) { "pill-high" } else { "" }
-            $olderDisplay = if ($s.OlderSizeGB -gt 0) { "<span class='$olderClass'>$($s.OlderSizeGB) GB</span>" } else { $s.OlderSizeGB }
+            $olderDisplay = if ($s.OlderSizeGB -gt 0) { "<span class='" + $olderClass + "'>" + $s.OlderSizeGB + " GB</span>" } else { $s.OlderSizeGB }
             
-            $html += @"
+            $htmlContent += '
 <tr>
-    <td>$($s.SiteUrl)</td>
-    <td>$($s.SiteTitle)</td>
-    <td class="number">$($s.TotalVersions)</td>
-    <td class="number">$($s.VersionsOlderThanX)</td>
-    <td class="number">$($s.TotalSizeGB)</td>
-    <td class="number">$olderDisplay</td>
-</tr>
-"@
+    <td>' + $s.SiteUrl + '</td>
+    <td>' + $s.SiteTitle + '</td>
+    <td class="number">' + $s.TotalVersions + '</td>
+    <td class="number">' + $s.VersionsOlderThanX + '</td>
+    <td class="number">' + $s.TotalSizeGB + '</td>
+    <td class="number">' + $olderDisplay + '</td>
+</tr>'
         }
 
-        $html += @"
+        $htmlContent += '
 </tbody>
 </table>
 <div class="footer">
-    Report generated at $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+    Report generated at ' + (Get-Date -Format "yyyy-MM-dd HH:mm:ss") + '
 </div>
 </div>
 </body>
-</html>
-"@
+</html>'
 
         try {
-            Set-Content -Path $HtmlReportPath -Value $html -Encoding UTF8 -ErrorAction Stop
+            Set-Content -Path $HtmlReportPath -Value $htmlContent -Encoding UTF8 -ErrorAction Stop
             Log ("HTML report written: " + $HtmlReportPath)
         }
         catch {
