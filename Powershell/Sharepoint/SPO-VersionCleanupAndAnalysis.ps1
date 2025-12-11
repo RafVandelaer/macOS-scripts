@@ -100,6 +100,7 @@ function Save-Config {
         RetentionDays = $RetentionDays
         versionStrategy = $versionStrategy
         excludedSites = $excludedSites
+        DryRun = $DryRun
     }
     $config | ConvertTo-Json | Set-Content -Path $Path -Encoding UTF8
     Write-Host "`nConfig saved successfully!" -ForegroundColor Green
@@ -118,6 +119,9 @@ function Load-Config {
             $script:RetentionDays = $config.RetentionDays
             $script:versionStrategy = $config.versionStrategy
             $script:excludedSites = @($config.excludedSites)
+            if ($config.PSObject.Properties.Name -contains 'DryRun') {
+                $script:DryRun = [bool]$config.DryRun
+            }
             $script:configLoaded = $true
             Log "Config loaded from: $Path"
             return $true
@@ -405,13 +409,16 @@ function Run-Cleanup {
     Log "=== MODE: CLEANUP (DryRun = $DryRun, Tenant = $TenantName) ==="
     Log "Running pre-flight checks for Cleanup..."
 
-    # Ensure retention is a valid integer
-    try {
-        $RetentionDaysInt = [int]$RetentionDays
-    } catch {
+    # Ensure retention is a valid integer > 0
+    $RetentionDaysInt = 0
+    $parsedRetention = 0
+    if ([int]::TryParse([string]$RetentionDays, [ref]$parsedRetention) -and $parsedRetention -gt 0) {
+        $RetentionDaysInt = $parsedRetention
+    } else {
         $RetentionDaysInt = 180
-        Log "[WARN] RetentionDays invalid; defaulting to 180"
+        Log "[WARN] RetentionDays invalid or <= 0; defaulting to 180"
     }
+    Log "Using retention (days): $RetentionDaysInt"
 
     if ($PSVersionTable.PSVersion.Major -ne 5) {
         Fail "This script must be run in Windows PowerShell 5.1."
