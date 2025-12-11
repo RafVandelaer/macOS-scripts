@@ -72,6 +72,7 @@ function Get-ConfigPath {
 # Allow overriding config path via parameter; otherwise derive from tenant
 if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
     $configFile = Get-ConfigPath $TenantName
+    $configLoaded = $false
 } else {
     $configFile = $ConfigPath
 }
@@ -117,6 +118,7 @@ function Load-Config {
             $script:RetentionDays = $config.RetentionDays
             $script:versionStrategy = $config.versionStrategy
             $script:excludedSites = @($config.excludedSites)
+            $script:configLoaded = $true
             Log "Config loaded from: $Path"
             return $true
         }
@@ -153,6 +155,7 @@ if ($Interactive) {
     Write-Host "========================================`n" -ForegroundColor Cyan
     
     $configPreloaded = $false
+    $configLoaded = $configLoaded -or $false
 
     # Offer any existing configs in temp dir (helps when tenant-specific file exists)
     $availableConfigs = Get-ChildItem -Path $tempDir -Filter "spo-version-tool-config*.json" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
@@ -183,6 +186,7 @@ if ($Interactive) {
         if ($loadPrev.ToLower() -eq "y") {
             if (Load-Config $configFile) {
                 Write-Host "Previous config loaded successfully from: $configFile" -ForegroundColor Green
+                $configLoaded = $true
             }
         }
     }
@@ -216,136 +220,147 @@ if ($Interactive) {
         }
     }
 
-    # Tenant name
-    $tenantInput = Read-Host "Tenant name (see hint above) [$TenantName]"
-    if (-not [string]::IsNullOrWhiteSpace($tenantInput)) {
-        $TenantName = $tenantInput.Trim()
-        $adminUrl = "https://$TenantName-admin.sharepoint.com"
-        $configFile = Get-ConfigPath $TenantName
+    # If a config is loaded, offer to skip all other prompts
+    $skipConfigPrompts = $false
+    if ($configLoaded) {
+        $skipInput = Read-Host "`nConfig loaded. Keep loaded tenant/settings and skip remaining prompts? (Y/n) [Y]"
+        if ([string]::IsNullOrWhiteSpace($skipInput) -or $skipInput.Trim().ToLower() -eq "y") {
+            $skipConfigPrompts = $true
+        }
     }
 
-    if ($Mode -eq "Cleanup") {
-        Write-Host "`n--- Version Management Strategy ---" -ForegroundColor Cyan
-        Write-Host "How should SharePoint manage old versions?" -ForegroundColor Yellow
-        Write-Host "  1. Manual: Set specific retention days (keep X days)" -ForegroundColor Gray
-        Write-Host "  2. Auto: Let Microsoft handle it (30 days default)" -ForegroundColor Gray
-        Write-Host "  3. None: Don't change current settings" -ForegroundColor Gray
-        
-        $strategyInput = Read-Host "Choose strategy (1-3) [1]"
-        $versionStrategy = "manual"
-        
-        if ($strategyInput -eq "2") {
-            $versionStrategy = "auto"
-            Write-Host "Using Microsoft auto-management (30 days)" -ForegroundColor Green
-        }
-        elseif ($strategyInput -eq "3") {
-            $versionStrategy = "none"
-            Write-Host "No changes will be made to version settings" -ForegroundColor Yellow
-        }
-        else {
-            $versionStrategy = "manual"
-            Write-Host "Using manual retention strategy" -ForegroundColor Green
+    if (-not $skipConfigPrompts) {
+        # Tenant name
+        $tenantInput = Read-Host "Tenant name (see hint above) [$TenantName]"
+        if (-not [string]::IsNullOrWhiteSpace($tenantInput)) {
+            $TenantName = $tenantInput.Trim()
+            $adminUrl = "https://$TenantName-admin.sharepoint.com"
+            $configFile = Get-ConfigPath $TenantName
         }
 
-        # Retention days - AFTER strategy selection
-        if ($versionStrategy -ne "none") {
-            $retInput = Read-Host "`nRetention days (older than X days) [$RetentionDays]"
-            if (-not [string]::IsNullOrWhiteSpace($retInput)) {
-                if ([int]::TryParse($retInput, [ref]$null)) {
-                    $RetentionDays = [int]$retInput
-                }
-                else {
-                    Write-Host "Invalid input, using default $RetentionDays" -ForegroundColor Yellow
-                }
-            }
-        }
-
-        $dryInput = Read-Host "`nDry run? (Y/n) [Y]"
-        if ([string]::IsNullOrWhiteSpace($dryInput) -or $dryInput.Trim().ToLower() -eq "y") {
-            $DryRun = $true
-        }
-        elseif ($dryInput.Trim().ToLower() -eq "n") {
-            $DryRun = $false
-            Write-Host "WARNING: Dry run disabled - changes will be ACTUALLY executed!" -ForegroundColor Red
-            $confirm = Read-Host "Are you sure you want to continue? (yes/no)"
-            if ($confirm.ToLower() -ne "yes") {
-                Write-Host "Cancelled by user." -ForegroundColor Yellow
-                exit 0
-            }
-        }
-        else {
-            Write-Host "Unknown choice, using DryRun = Yes" -ForegroundColor Yellow
-            $DryRun = $true
-        }
-
-        # Site exclusions
-        Write-Host "`n--- Site Exclusions ---" -ForegroundColor Cyan
-        Write-Host "Current excluded sites:"
-        if ($excludedSites.Count -eq 0) {
-            Write-Host "  (none)" -ForegroundColor Gray
-        } else {
-            foreach ($site in $excludedSites) {
-                Write-Host "  - $site" -ForegroundColor Gray
-            }
-        }
-        
-        $modifyExclusions = Read-Host "`nModify excluded sites? (y/N) [N]"
-        if ($modifyExclusions.Trim().ToLower() -eq "y") {
-            Write-Host "`nOptions:" -ForegroundColor Yellow
-            Write-Host "  1. Add sites to exclusion list"
-            Write-Host "  2. Clear all exclusions (process ALL sites)"
-            Write-Host "  3. Keep current list"
-            $choice = Read-Host "Choose option (1-3) [3]"
+        if ($Mode -eq "Cleanup") {
+            Write-Host "`n--- Version Management Strategy ---" -ForegroundColor Cyan
+            Write-Host "How should SharePoint manage old versions?" -ForegroundColor Yellow
+            Write-Host "  1. Manual: Set specific retention days (keep X days)" -ForegroundColor Gray
+            Write-Host "  2. Auto: Let Microsoft handle it (30 days default)" -ForegroundColor Gray
+            Write-Host "  3. None: Don't change current settings" -ForegroundColor Gray
             
-            if ($choice -eq "1") {
-                Write-Host "`n--- Add Sites to Exclusion List ---" -ForegroundColor Yellow
-                Write-Host "Enter site URLs to exclude (one per line, empty line to finish):" -ForegroundColor Yellow
-                Write-Host "`nExpected URL format:" -ForegroundColor Green
-                Write-Host "  https://[TENANT].sharepoint.com/sites/[SITENAME]" -ForegroundColor Green
-                Write-Host "`nExamples for tenant '$TenantName':" -ForegroundColor Green
-                Write-Host "  - https://$TenantName.sharepoint.com/sites/DoNotTouch" -ForegroundColor Gray
-                Write-Host "  - https://$TenantName.sharepoint.com/sites/HR-Records" -ForegroundColor Gray
-                Write-Host "  - https://$TenantName.sharepoint.com" -ForegroundColor Gray
-                Write-Host ""
-                
-                $newExclusions = @()
-                do {
-                    $siteUrl = Read-Host "Site URL"
-                    if (-not [string]::IsNullOrWhiteSpace($siteUrl)) {
-                        $siteUrl = $siteUrl.Trim()
-                        if ($siteUrl -match "^https://.*\.sharepoint\.com(/.*)?$") {
-                            $newExclusions += $siteUrl
-                            Write-Host "  [OK] Added: $siteUrl" -ForegroundColor Green
-                        } else {
-                            Write-Host "  [ERROR] Invalid URL format. Must be: https://[TENANT].sharepoint.com[/sites/NAME]" -ForegroundColor Red
-                        }
+            $strategyInput = Read-Host "Choose strategy (1-3) [1]"
+            $versionStrategy = "manual"
+            
+            if ($strategyInput -eq "2") {
+                $versionStrategy = "auto"
+                Write-Host "Using Microsoft auto-management (30 days)" -ForegroundColor Green
+            }
+            elseif ($strategyInput -eq "3") {
+                $versionStrategy = "none"
+                Write-Host "No changes will be made to version settings" -ForegroundColor Yellow
+            }
+            else {
+                $versionStrategy = "manual"
+                Write-Host "Using manual retention strategy" -ForegroundColor Green
+            }
+
+            # Retention days - AFTER strategy selection
+            if ($versionStrategy -ne "none") {
+                $retInput = Read-Host "`nRetention days (older than X days) [$RetentionDays]"
+                if (-not [string]::IsNullOrWhiteSpace($retInput)) {
+                    if ([int]::TryParse($retInput, [ref]$null)) {
+                        $RetentionDays = [int]$retInput
                     }
-                } while (-not [string]::IsNullOrWhiteSpace($siteUrl))
-                
-                if ($newExclusions.Count -gt 0) {
-                    $excludedSites = $excludedSites + $newExclusions | Select-Object -Unique
-                    Write-Host "`n$($newExclusions.Count) site(s) added to exclusion list" -ForegroundColor Green
+                    else {
+                        Write-Host "Invalid input, using default $RetentionDays" -ForegroundColor Yellow
+                    }
                 }
             }
-            elseif ($choice -eq "2") {
-                $confirmClear = Read-Host "Are you sure you want to clear ALL exclusions? (yes/no)"
-                if ($confirmClear.ToLower() -eq "yes") {
-                    $excludedSites = @()
-                    Write-Host "All exclusions cleared. ALL sites will be processed!" -ForegroundColor Yellow
-                } else {
-                    Write-Host "Keeping current exclusion list" -ForegroundColor Gray
+
+            $dryInput = Read-Host "`nDry run? (Y/n) [Y]"
+            if ([string]::IsNullOrWhiteSpace($dryInput) -or $dryInput.Trim().ToLower() -eq "y") {
+                $DryRun = $true
+            }
+            elseif ($dryInput.Trim().ToLower() -eq "n") {
+                $DryRun = $false
+                Write-Host "WARNING: Dry run disabled - changes will be ACTUALLY executed!" -ForegroundColor Red
+                $confirm = Read-Host "Are you sure you want to continue? (yes/no)"
+                if ($confirm.ToLower() -ne "yes") {
+                    Write-Host "Cancelled by user." -ForegroundColor Yellow
+                    exit 0
+                }
+            }
+            else {
+                Write-Host "Unknown choice, using DryRun = Yes" -ForegroundColor Yellow
+                $DryRun = $true
+            }
+
+            # Site exclusions
+            Write-Host "`n--- Site Exclusions ---" -ForegroundColor Cyan
+            Write-Host "Current excluded sites:"
+            if ($excludedSites.Count -eq 0) {
+                Write-Host "  (none)" -ForegroundColor Gray
+            } else {
+                foreach ($site in $excludedSites) {
+                    Write-Host "  - $site" -ForegroundColor Gray
+                }
+            }
+            
+            $modifyExclusions = Read-Host "`nModify excluded sites? (y/N) [N]"
+            if ($modifyExclusions.Trim().ToLower() -eq "y") {
+                Write-Host "`nOptions:" -ForegroundColor Yellow
+                Write-Host "  1. Add sites to exclusion list"
+                Write-Host "  2. Clear all exclusions (process ALL sites)"
+                Write-Host "  3. Keep current list"
+                $choice = Read-Host "Choose option (1-3) [3]"
+                
+                if ($choice -eq "1") {
+                    Write-Host "`n--- Add Sites to Exclusion List ---" -ForegroundColor Yellow
+                    Write-Host "Enter site URLs to exclude (one per line, empty line to finish):" -ForegroundColor Yellow
+                    Write-Host "`nExpected URL format:" -ForegroundColor Green
+                    Write-Host "  https://[TENANT].sharepoint.com/sites/[SITENAME]" -ForegroundColor Green
+                    Write-Host "`nExamples for tenant '$TenantName':" -ForegroundColor Green
+                    Write-Host "  - https://$TenantName.sharepoint.com/sites/DoNotTouch" -ForegroundColor Gray
+                    Write-Host "  - https://$TenantName.sharepoint.com/sites/HR-Records" -ForegroundColor Gray
+                    Write-Host "  - https://$TenantName.sharepoint.com" -ForegroundColor Gray
+                    Write-Host ""
+                    
+                    $newExclusions = @()
+                    do {
+                        $siteUrl = Read-Host "Site URL"
+                        if (-not [string]::IsNullOrWhiteSpace($siteUrl)) {
+                            $siteUrl = $siteUrl.Trim()
+                            if ($siteUrl -match "^https://.*\\.sharepoint\\.com(/.*)?$") {
+                                $newExclusions += $siteUrl
+                                Write-Host "  [OK] Added: $siteUrl" -ForegroundColor Green
+                            } else {
+                                Write-Host "  [ERROR] Invalid URL format. Must be: https://[TENANT].sharepoint.com[/sites/NAME]" -ForegroundColor Red
+                            }
+                        }
+                    } while (-not [string]::IsNullOrWhiteSpace($siteUrl))
+                    
+                    if ($newExclusions.Count -gt 0) {
+                        $excludedSites = $excludedSites + $newExclusions | Select-Object -Unique
+                        Write-Host "`n$($newExclusions.Count) site(s) added to exclusion list" -ForegroundColor Green
+                    }
+                }
+                elseif ($choice -eq "2") {
+                    $confirmClear = Read-Host "Are you sure you want to clear ALL exclusions? (yes/no)"
+                    if ($confirmClear.ToLower() -eq "yes") {
+                        $excludedSites = @()
+                        Write-Host "All exclusions cleared. ALL sites will be processed!" -ForegroundColor Yellow
+                    } else {
+                        Write-Host "Keeping current exclusion list" -ForegroundColor Gray
+                    }
                 }
             }
         }
-    }
-    elseif ($Mode -eq "Analyze") {
-        Write-Host "`n--- Analyze Configuration ---" -ForegroundColor Cyan
-        Write-Host "The script will connect to SharePoint Online and retrieve version data." -ForegroundColor Yellow
-        Write-Host "This will use your current Office 365 credentials." -ForegroundColor Gray
-        
-        $htmlInput = Read-Host "`nHTML output file path [$HtmlReportPath]"
-        if (-not [string]::IsNullOrWhiteSpace($htmlInput)) {
-            $HtmlReportPath = $htmlInput.Trim()
+        elseif ($Mode -eq "Analyze") {
+            Write-Host "`n--- Analyze Configuration ---" -ForegroundColor Cyan
+            Write-Host "The script will connect to SharePoint Online and retrieve version data." -ForegroundColor Yellow
+            Write-Host "This will use your current Office 365 credentials." -ForegroundColor Gray
+            
+            $htmlInput = Read-Host "`nHTML output file path [$HtmlReportPath]"
+            if (-not [string]::IsNullOrWhiteSpace($htmlInput)) {
+                $HtmlReportPath = $htmlInput.Trim()
+            }
         }
     }
 
