@@ -59,6 +59,16 @@ if (!(Test-Path $logDir)) {
     New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 }
 
+function Get-ConfigPath {
+    param([string]$Tenant)
+    if ([string]::IsNullOrWhiteSpace($Tenant) -or $Tenant -eq "yourtenant") {
+        return Join-Path $tempDir "spo-version-tool-config.json"
+    }
+    return Join-Path $tempDir "spo-version-tool-config-$Tenant.json"
+}
+
+$configFile = Get-ConfigPath $TenantName
+
 function Log {
     param([string]$Message)
     $entry = (Get-Date -Format "yyyy-MM-dd HH:mm:ss") + " - " + $Message
@@ -74,6 +84,43 @@ function Fail {
     exit 1
 }
 
+function Save-Config {
+    param([string]$Path)
+    $config = @{
+        TenantName = $TenantName
+        Mode = $Mode
+        RetentionDays = $RetentionDays
+        versionStrategy = $versionStrategy
+        excludedSites = $excludedSites
+    }
+    $config | ConvertTo-Json | Set-Content -Path $Path -Encoding UTF8
+    Write-Host "`nConfig saved successfully!" -ForegroundColor Green
+    Write-Host "  Location: $Path" -ForegroundColor Green
+    Write-Host "  Tenant:   $TenantName" -ForegroundColor Green
+    Log "Config saved to: $Path"
+}
+
+function Load-Config {
+    param([string]$Path)
+    if (Test-Path $Path) {
+        try {
+            $config = Get-Content -Path $Path -Encoding UTF8 | ConvertFrom-Json
+            $script:TenantName = $config.TenantName
+            $script:Mode = $config.Mode
+            $script:RetentionDays = $config.RetentionDays
+            $script:versionStrategy = $config.versionStrategy
+            $script:excludedSites = @($config.excludedSites)
+            Log "Config loaded from: $Path"
+            return $true
+        }
+        catch {
+            Write-Host "Failed to load config: $_" -ForegroundColor Yellow
+            return $false
+        }
+    }
+    return $false
+}
+
 ###############################################################
 # INTERACTIVE SETUP
 ###############################################################
@@ -82,7 +129,19 @@ if ($Interactive) {
     Write-Host "`n========================================" -ForegroundColor Cyan
     Write-Host "  SHAREPOINT VERSION TOOL - INTERACTIVE" -ForegroundColor Cyan
     Write-Host "========================================`n" -ForegroundColor Cyan
-    Write-Host "Press Enter to accept the default value [in brackets].`n" -ForegroundColor Yellow
+    
+    # Try to load previous config
+    Write-Host "Config location: $configFile" -ForegroundColor Gray
+    if (Test-Path $configFile) {
+        $loadPrev = Read-Host "`nLoad previous config? (y/N) [N]"
+        if ($loadPrev.ToLower() -eq "y") {
+            if (Load-Config $configFile) {
+                Write-Host "Previous config loaded successfully from: $configFile" -ForegroundColor Green
+            }
+        }
+    }
+    
+    Write-Host "`nPress Enter to accept the default value [in brackets].`n" -ForegroundColor Yellow
     Write-Host "HINT: Find tenant name in SharePoint Admin URL:" -ForegroundColor Green
     Write-Host "      https://[TENANT-NAME]-admin.sharepoint.com" -ForegroundColor Green
     Write-Host "      Example: https://contoso-admin.sharepoint.com -> enter: contoso`n" -ForegroundColor Green
@@ -116,17 +175,7 @@ if ($Interactive) {
     if (-not [string]::IsNullOrWhiteSpace($tenantInput)) {
         $TenantName = $tenantInput.Trim()
         $adminUrl = "https://$TenantName-admin.sharepoint.com"
-    }
-
-    # Retention days
-    $retInput = Read-Host "Retention days (older than X days) [$RetentionDays]"
-    if (-not [string]::IsNullOrWhiteSpace($retInput)) {
-        if ([int]::TryParse($retInput, [ref]$null)) {
-            $RetentionDays = [int]$retInput
-        }
-        else {
-            Write-Host "Invalid input, using default $RetentionDays" -ForegroundColor Yellow
-        }
+        $configFile = Get-ConfigPath $TenantName
     }
 
     if ($Mode -eq "Cleanup") {
@@ -149,7 +198,20 @@ if ($Interactive) {
         }
         else {
             $versionStrategy = "manual"
-            Write-Host "Using manual retention: $RetentionDays days" -ForegroundColor Green
+            Write-Host "Using manual retention strategy" -ForegroundColor Green
+        }
+
+        # Retention days - AFTER strategy selection
+        if ($versionStrategy -ne "none") {
+            $retInput = Read-Host "`nRetention days (older than X days) [$RetentionDays]"
+            if (-not [string]::IsNullOrWhiteSpace($retInput)) {
+                if ([int]::TryParse($retInput, [ref]$null)) {
+                    $RetentionDays = [int]$retInput
+                }
+                else {
+                    Write-Host "Invalid input, using default $RetentionDays" -ForegroundColor Yellow
+                }
+            }
         }
 
         $dryInput = Read-Host "`nDry run? (Y/n) [Y]"
@@ -265,6 +327,12 @@ if ($Interactive) {
     if ($proceed.ToLower() -eq "n") {
         Write-Host "Cancelled by user." -ForegroundColor Yellow
         exit 0
+    }
+    
+    # Save config for next run
+    $saveConfig = Read-Host "`nSave this configuration for next time? (y/N) [N]"
+    if ($saveConfig.ToLower() -eq "y") {
+        Save-Config $configFile
     }
 }
 
