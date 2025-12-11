@@ -23,7 +23,9 @@
 ###############################################################
 
 param(
-    [switch]$NonInteractive
+    [switch]$NonInteractive,
+    [switch]$LoadConfigFromFile,
+    [string]$ConfigPath
 )
 
 $Interactive = -not $NonInteractive
@@ -67,7 +69,12 @@ function Get-ConfigPath {
     return Join-Path $tempDir "spo-version-tool-config-$Tenant.json"
 }
 
-$configFile = Get-ConfigPath $TenantName
+# Allow overriding config path via parameter; otherwise derive from tenant
+if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
+    $configFile = Get-ConfigPath $TenantName
+} else {
+    $configFile = $ConfigPath
+}
 
 function Log {
     param([string]$Message)
@@ -121,6 +128,21 @@ function Load-Config {
     return $false
 }
 
+# Auto-load config when requested (useful for -NonInteractive runs)
+if ($LoadConfigFromFile) {
+    if (-not (Load-Config $configFile)) {
+        Fail "Failed to load config from: $configFile"
+    }
+
+    # Update dependent values when tenant changes via config
+    $adminUrl = "https://$TenantName-admin.sharepoint.com"
+
+    # If config path was not explicitly provided, realign to tenant-specific default
+    if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
+        $configFile = Get-ConfigPath $TenantName
+    }
+}
+
 ###############################################################
 # INTERACTIVE SETUP
 ###############################################################
@@ -133,7 +155,9 @@ if ($Interactive) {
     # Try to load previous config
     Write-Host "Config location: $configFile" -ForegroundColor Gray
     if (Test-Path $configFile) {
-        $loadPrev = Read-Host "`nLoad previous config? (y/N) [N]"
+        $lastWrite = (Get-Item $configFile).LastWriteTime
+        Write-Host "Found existing config (last modified: $lastWrite)." -ForegroundColor Yellow
+        $loadPrev = Read-Host "`nLoad previous config now? (y/N) [N]"
         if ($loadPrev.ToLower() -eq "y") {
             if (Load-Config $configFile) {
                 Write-Host "Previous config loaded successfully from: $configFile" -ForegroundColor Green
