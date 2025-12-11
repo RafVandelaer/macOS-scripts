@@ -49,6 +49,8 @@ $DryRun = $true
 $RetentionDays = 90
 $HtmlReportPath = Join-Path $tempDir "spo-version-analysis.html"
 $versionStrategy = "manual"
+$MajorVersionLimit = 500
+$MajorWithMinorVersionsLimit = 20
 
 $excludedSites = @()
 
@@ -101,6 +103,8 @@ function Save-Config {
         versionStrategy = $versionStrategy
         excludedSites = $excludedSites
         DryRun = $DryRun
+        MajorVersionLimit = $MajorVersionLimit
+        MajorWithMinorVersionsLimit = $MajorWithMinorVersionsLimit
     }
     $config | ConvertTo-Json | Set-Content -Path $Path -Encoding UTF8
     Write-Host "`nConfig saved successfully!" -ForegroundColor Green
@@ -121,6 +125,12 @@ function Load-Config {
             $script:excludedSites = @($config.excludedSites)
             if ($config.PSObject.Properties.Name -contains 'DryRun') {
                 $script:DryRun = [bool]$config.DryRun
+            }
+            if ($config.PSObject.Properties.Name -contains 'MajorVersionLimit') {
+                $script:MajorVersionLimit = [int]$config.MajorVersionLimit
+            }
+            if ($config.PSObject.Properties.Name -contains 'MajorWithMinorVersionsLimit') {
+                $script:MajorWithMinorVersionsLimit = [int]$config.MajorWithMinorVersionsLimit
             }
             $script:configLoaded = $true
             Log "Config loaded from: $Path"
@@ -278,6 +288,21 @@ if ($Interactive) {
                 }
             }
 
+            # Manual limits required by SPO when auto trim is off
+            $majorInput = Read-Host "Major version limit (1-50000) [$MajorVersionLimit]"
+            if (-not [string]::IsNullOrWhiteSpace($majorInput)) {
+                if ([int]::TryParse($majorInput, [ref]$null)) {
+                    $MajorVersionLimit = [int]$majorInput
+                }
+            }
+
+            $minorInput = Read-Host "Major+Minor versions limit (0-50000) [$MajorWithMinorVersionsLimit]"
+            if (-not [string]::IsNullOrWhiteSpace($minorInput)) {
+                if ([int]::TryParse($minorInput, [ref]$null)) {
+                    $MajorWithMinorVersionsLimit = [int]$minorInput
+                }
+            }
+
             $dryInput = Read-Host "`nDry run? (Y/n) [Y]"
             if ([string]::IsNullOrWhiteSpace($dryInput) -or $dryInput.Trim().ToLower() -eq "y") {
                 $DryRun = $true
@@ -378,6 +403,8 @@ if ($Interactive) {
         Write-Host "Strategy       : $versionStrategy" -ForegroundColor Yellow
         if ($versionStrategy -eq "manual") {
             Write-Host "RetentionDays  : $RetentionDays"
+            Write-Host "MajorLimit     : $MajorVersionLimit"
+            Write-Host "Major+Minor    : $MajorWithMinorVersionsLimit"
         }
         Write-Host "DryRun         : $DryRun" -ForegroundColor $(if ($DryRun) { "Green" } else { "Red" })
         Write-Host "Excluded Sites : $($excludedSites.Count)" -ForegroundColor $(if ($excludedSites.Count -eq 0) { "Yellow" } else { "Cyan" })
@@ -419,6 +446,18 @@ function Run-Cleanup {
         Log "[WARN] RetentionDays invalid or <= 0; defaulting to 180"
     }
     Log "Using retention (days): $RetentionDaysInt"
+
+    # Ensure major/minor limits are valid when manual strategy
+    $MajorVersionLimitInt = $MajorVersionLimit
+    $MajorWithMinorVersionsLimitInt = $MajorWithMinorVersionsLimit
+    if (-not [int]::TryParse([string]$MajorVersionLimit, [ref]$MajorVersionLimitInt) -or $MajorVersionLimitInt -lt 1) {
+        $MajorVersionLimitInt = 500
+        Log "[WARN] MajorVersionLimit invalid; defaulting to 500"
+    }
+    if (-not [int]::TryParse([string]$MajorWithMinorVersionsLimit, [ref]$MajorWithMinorVersionsLimitInt) -or $MajorWithMinorVersionsLimitInt -lt 0) {
+        $MajorWithMinorVersionsLimitInt = 20
+        Log "[WARN] MajorWithMinorVersionsLimit invalid; defaulting to 20"
+    }
 
     if ($PSVersionTable.PSVersion.Major -ne 5) {
         Fail "This script must be run in Windows PowerShell 5.1."
@@ -479,17 +518,22 @@ function Run-Cleanup {
                     # First disable, then reconfigure with new retention days
                     Set-SPOSite -Identity $site.Url `
                         -EnableAutoExpirationVersionTrim $false `
-                        -ApplyToExistingDocumentLibraries `
-                        -Confirm:$false
-                    Log "  [OK] Auto-expiration disabled (reconfiguring...)"
-                    
-                    # Now enable with new retention days
-                    Set-SPOSite -Identity $site.Url `
-                        -EnableAutoExpirationVersionTrim $true `
+                        -MajorVersionLimit $MajorVersionLimitInt `
+                        -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimitInt `
                         -ExpireVersionsAfterDays $RetentionDaysInt `
                         -ApplyToExistingDocumentLibraries `
                         -Confirm:$false
-                    Log "  [OK] Auto-trimming reconfigured: $RetentionDaysInt days retention"
+                    Log "  [OK] Auto-expiration disabled and manual limits set"
+                    
+                    # Now enable manual trim with retention days
+                    Set-SPOSite -Identity $site.Url `
+                        -EnableAutoExpirationVersionTrim $false `
+                        -MajorVersionLimit $MajorVersionLimitInt `
+                        -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimitInt `
+                        -ExpireVersionsAfterDays $RetentionDaysInt `
+                        -ApplyToExistingDocumentLibraries `
+                        -Confirm:$false
+                    Log "  [OK] Manual trimming configured: $RetentionDaysInt days, Major=$MajorVersionLimitInt, Minor=$MajorWithMinorVersionsLimitInt"
                     
                     # Start immediate cleanup job for manual strategy
                     try {
