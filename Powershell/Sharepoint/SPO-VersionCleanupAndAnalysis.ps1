@@ -344,6 +344,14 @@ function Run-Cleanup {
     Log "=== MODE: CLEANUP (DryRun = $DryRun, Tenant = $TenantName) ==="
     Log "Running pre-flight checks for Cleanup..."
 
+    # Ensure retention is a valid integer
+    try {
+        $RetentionDaysInt = [int]$RetentionDays
+    } catch {
+        $RetentionDaysInt = 180
+        Log "[WARN] RetentionDays invalid; defaulting to 180"
+    }
+
     if ($PSVersionTable.PSVersion.Major -ne 5) {
         Fail "This script must be run in Windows PowerShell 5.1."
     }
@@ -410,14 +418,14 @@ function Run-Cleanup {
                     # Now enable with new retention days
                     Set-SPOSite -Identity $site.Url `
                         -EnableAutoExpirationVersionTrim $true `
-                        -ExpireVersionsAfterDays $RetentionDays `
+                        -ExpireVersionsAfterDays $RetentionDaysInt `
                         -ApplyToExistingDocumentLibraries `
                         -Confirm:$false
-                    Log "  [OK] Auto-trimming reconfigured: $RetentionDays days retention"
+                    Log "  [OK] Auto-trimming reconfigured: $RetentionDaysInt days retention"
                     
                     # Start immediate cleanup job for manual strategy
                     try {
-                        New-SPOSiteFileVersionBatchDeleteJob -Identity $site.Url -DeleteBeforeDays $RetentionDays -Confirm:$false
+                        New-SPOSiteFileVersionBatchDeleteJob -Identity $site.Url -DeleteBeforeDays $RetentionDaysInt -Confirm:$false
                         Log "  [OK] Cleanup job started immediately"
                     }
                     catch {
