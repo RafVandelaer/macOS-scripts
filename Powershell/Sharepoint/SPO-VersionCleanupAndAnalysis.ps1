@@ -46,6 +46,7 @@ $logFile = Join-Path $tempDir "spo-version-tool.log"
 $DryRun = $true
 $RetentionDays = 90
 $HtmlReportPath = Join-Path $tempDir "spo-version-analysis.html"
+$versionStrategy = "manual"
 
 $excludedSites = @()
 
@@ -129,7 +130,29 @@ if ($Interactive) {
     }
 
     if ($Mode -eq "Cleanup") {
-        $dryInput = Read-Host "Dry run? (Y/n) [Y]"
+        Write-Host "`n--- Version Management Strategy ---" -ForegroundColor Cyan
+        Write-Host "How should SharePoint manage old versions?" -ForegroundColor Yellow
+        Write-Host "  1. Manual: Set specific retention days (keep X days)" -ForegroundColor Gray
+        Write-Host "  2. Auto: Let Microsoft handle it (30 days default)" -ForegroundColor Gray
+        Write-Host "  3. None: Don't change current settings" -ForegroundColor Gray
+        
+        $strategyInput = Read-Host "Choose strategy (1-3) [1]"
+        $versionStrategy = "manual"
+        
+        if ($strategyInput -eq "2") {
+            $versionStrategy = "auto"
+            Write-Host "Using Microsoft auto-management (30 days)" -ForegroundColor Green
+        }
+        elseif ($strategyInput -eq "3") {
+            $versionStrategy = "none"
+            Write-Host "No changes will be made to version settings" -ForegroundColor Yellow
+        }
+        else {
+            $versionStrategy = "manual"
+            Write-Host "Using manual retention: $RetentionDays days" -ForegroundColor Green
+        }
+
+        $dryInput = Read-Host "`nDry run? (Y/n) [Y]"
         if ([string]::IsNullOrWhiteSpace($dryInput) -or $dryInput.Trim().ToLower() -eq "y") {
             $DryRun = $true
         }
@@ -224,12 +247,16 @@ if ($Interactive) {
     Write-Host "Mode           : $Mode"
     Write-Host "Tenant         : $TenantName"
     Write-Host "Admin URL      : $adminUrl"
-    Write-Host "RetentionDays  : $RetentionDays"
     if ($Mode -eq "Cleanup") {
+        Write-Host "Strategy       : $versionStrategy" -ForegroundColor Yellow
+        if ($versionStrategy -eq "manual") {
+            Write-Host "RetentionDays  : $RetentionDays"
+        }
         Write-Host "DryRun         : $DryRun" -ForegroundColor $(if ($DryRun) { "Green" } else { "Red" })
         Write-Host "Excluded Sites : $($excludedSites.Count)" -ForegroundColor $(if ($excludedSites.Count -eq 0) { "Yellow" } else { "Cyan" })
     }
     elseif ($Mode -eq "Analyze") {
+        Write-Host "RetentionDays  : $RetentionDays"
         Write-Host "HtmlReportPath : $HtmlReportPath"
     }
     Write-Host "========================================`n" -ForegroundColor Cyan
@@ -280,31 +307,50 @@ function Run-Cleanup {
         Log ("[" + ($processedCount + 1) + "/" + $sites.Count + "] Processing: $($site.Url)")
         $siteHadError = $false
 
-        if ($DryRun) {
-            Log "  DRY RUN: Would enable Automatic trimming"
-        }
-        else {
-            try {
-                Set-SPOSite -Identity $site.Url -EnableAutoExpirationVersionTrim $true -ApplyToExistingDocumentLibraries -Confirm:$false
-                Log "  [OK] Automatic trimming applied"
-            }
-            catch {
-                Log ("  [ERROR] Applying trimming: " + $_)
-                $siteHadError = $true
-                $errorCount++
-            }
+        if ($versionStrategy -eq "none") {
+            Log "  [SKIP] No version strategy changes (strategy = none)"
+            $processedCount++
+            continue
         }
 
         if ($DryRun) {
-            Log ("  DRY RUN: Would start cleanup job (versions older than " + $RetentionDays + " days)")
+            if ($versionStrategy -eq "auto") {
+                Log "  DRY RUN: Would enable Microsoft auto-management (30 days default)"
+            }
+            else {
+                Log "  DRY RUN: Would enable auto-trimming with $RetentionDays days retention"
+                Log "  DRY RUN: Would start immediate cleanup job"
+            }
         }
         else {
             try {
-                New-SPOSiteFileVersionBatchDeleteJob -Identity $site.Url -DeleteBeforeDays $RetentionDays -Confirm:$false
-                Log ("  [OK] Cleanup job started")
+                if ($versionStrategy -eq "auto") {
+                    Set-SPOSite -Identity $site.Url `
+                        -EnableAutoExpirationVersionTrim $true `
+                        -ApplyToExistingDocumentLibraries `
+                        -Confirm:$false
+                    Log "  [OK] Microsoft auto-management enabled (30 days default)"
+                }
+                else {
+                    Set-SPOSite -Identity $site.Url `
+                        -EnableAutoExpirationVersionTrim $true `
+                        -ExpireVersionsAfterDays $RetentionDays `
+                        -ApplyToExistingDocumentLibraries `
+                        -Confirm:$false
+                    Log "  [OK] Auto-trimming configured: $RetentionDays days retention"
+                    
+                    # Start immediate cleanup job for manual strategy
+                    try {
+                        New-SPOSiteFileVersionBatchDeleteJob -Identity $site.Url -DeleteBeforeDays $RetentionDays -Confirm:$false
+                        Log "  [OK] Cleanup job started immediately"
+                    }
+                    catch {
+                        Log ("  [WARN] Could not start cleanup job: " + $_.Exception.Message)
+                    }
+                }
             }
             catch {
-                Log ("  [ERROR] Starting cleanup job: " + $_)
+                Log ("  [ERROR] Setting version strategy: " + $_.Exception.Message)
                 $siteHadError = $true
                 $errorCount++
             }
