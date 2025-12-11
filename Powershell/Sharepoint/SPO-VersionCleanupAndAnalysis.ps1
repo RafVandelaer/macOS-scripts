@@ -152,9 +152,31 @@ if ($Interactive) {
     Write-Host "  SHAREPOINT VERSION TOOL - INTERACTIVE" -ForegroundColor Cyan
     Write-Host "========================================`n" -ForegroundColor Cyan
     
-    # Try to load previous config
+    $configPreloaded = $false
+
+    # Offer any existing configs in temp dir (helps when tenant-specific file exists)
+    $availableConfigs = Get-ChildItem -Path $tempDir -Filter "spo-version-tool-config*.json" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
+    if ($availableConfigs.Count -gt 0) {
+        Write-Host "Found existing config files:" -ForegroundColor Yellow
+        for ($i = 0; $i -lt $availableConfigs.Count; $i++) {
+            $item = $availableConfigs[$i]
+            Write-Host "  [$($i+1)] $($item.Name) (last modified: $($item.LastWriteTime))" -ForegroundColor Gray
+        }
+        $pick = Read-Host "Select a config to load by number, or press Enter to skip"
+        if ([int]::TryParse($pick, [ref]$null) -and $pick -ge 1 -and $pick -le $availableConfigs.Count) {
+            $selectedConfig = $availableConfigs[$pick - 1].FullName
+            if (Load-Config $selectedConfig) {
+                $configPreloaded = $true
+                $configFile = $selectedConfig
+                $adminUrl = "https://$TenantName-admin.sharepoint.com"
+                Write-Host "Config loaded from: $selectedConfig" -ForegroundColor Green
+            }
+        }
+    }
+
+    # Try to load previous config (default path) if not already loaded
     Write-Host "Config location: $configFile" -ForegroundColor Gray
-    if (Test-Path $configFile) {
+    if ((-not $configPreloaded) -and (Test-Path $configFile)) {
         $lastWrite = (Get-Item $configFile).LastWriteTime
         Write-Host "Found existing config (last modified: $lastWrite)." -ForegroundColor Yellow
         $loadPrev = Read-Host "`nLoad previous config now? (y/N) [N]"
