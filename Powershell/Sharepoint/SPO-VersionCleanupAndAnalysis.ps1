@@ -332,12 +332,20 @@ function Run-Cleanup {
                     Log "  [OK] Microsoft auto-management enabled (30 days default)"
                 }
                 else {
+                    # First disable, then reconfigure with new retention days
+                    Set-SPOSite -Identity $site.Url `
+                        -EnableAutoExpirationVersionTrim $false `
+                        -ApplyToExistingDocumentLibraries `
+                        -Confirm:$false
+                    Log "  [OK] Auto-expiration disabled (reconfiguring...)"
+                    
+                    # Now enable with new retention days
                     Set-SPOSite -Identity $site.Url `
                         -EnableAutoExpirationVersionTrim $true `
                         -ExpireVersionsAfterDays $RetentionDays `
                         -ApplyToExistingDocumentLibraries `
                         -Confirm:$false
-                    Log "  [OK] Auto-trimming configured: $RetentionDays days retention"
+                    Log "  [OK] Auto-trimming reconfigured: $RetentionDays days retention"
                     
                     # Start immediate cleanup job for manual strategy
                     try {
