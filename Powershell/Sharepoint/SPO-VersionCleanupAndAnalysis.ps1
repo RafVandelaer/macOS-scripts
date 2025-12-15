@@ -49,7 +49,7 @@ $DryRun = $true
 $RetentionDays = 90
 $HtmlReportPath = Join-Path $tempDir "spo-version-analysis.html"
 $versionStrategy = "manual"
-$MajorVersionLimit = 500
+$MajorVersionLimit = 100
 $MajorWithMinorVersionsLimit = 20
 
 $excludedSites = @()
@@ -451,8 +451,8 @@ function Run-Cleanup {
     $MajorVersionLimitInt = $MajorVersionLimit
     $MajorWithMinorVersionsLimitInt = $MajorWithMinorVersionsLimit
     if (-not [int]::TryParse([string]$MajorVersionLimit, [ref]$MajorVersionLimitInt) -or $MajorVersionLimitInt -lt 1) {
-        $MajorVersionLimitInt = 500
-        Log "[WARN] MajorVersionLimit invalid; defaulting to 500"
+        $MajorVersionLimitInt = 100
+        Log "[WARN] MajorVersionLimit invalid; defaulting to 100"
     }
     if (-not [int]::TryParse([string]$MajorWithMinorVersionsLimit, [ref]$MajorWithMinorVersionsLimitInt) -or $MajorWithMinorVersionsLimitInt -lt 0) {
         $MajorWithMinorVersionsLimitInt = 20
