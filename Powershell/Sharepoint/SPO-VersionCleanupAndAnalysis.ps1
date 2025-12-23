@@ -160,6 +160,52 @@ if ($LoadConfigFromFile) {
 }
 
 ###############################################################
+# CONNECTION HELPER (TLS 1.2 + MFA-aware)
+###############################################################
+
+function Ensure-SPOConnection {
+    param(
+        [Parameter(Mandatory=$true)][string]$Url,
+        [switch]$Interactive
+    )
+
+    # Enforce TLS 1.2 (required by modern Microsoft endpoints)
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    } catch {}
+
+    $supportsMFA = $false
+    $cmd = Get-Command Connect-SPOService -ErrorAction SilentlyContinue
+    if ($cmd -and $cmd.Parameters.ContainsKey('SPOManagementShellCredential')) {
+        $supportsMFA = $true
+    }
+
+    Log "Connecting to SharePoint Online Admin..."
+    try {
+        if ($supportsMFA -and $Interactive) {
+            Connect-SPOService -Url $Url -SPOManagementShellCredential
+        } else {
+            Connect-SPOService -Url $Url
+        }
+    }
+    catch {
+        Log ("[ERROR] Connect-SPOService failed: " + $_.Exception.Message)
+        return $false
+    }
+
+    # Verify the connection actually succeeded
+    try {
+        Get-SPOSite -Limit 1 -ErrorAction Stop | Out-Null
+        Log "Connected successfully"
+        return $true
+    }
+    catch {
+        Log ("[ERROR] Connection verification failed: " + $_.Exception.Message)
+        return $false
+    }
+}
+
+###############################################################
 # INTERACTIVE SETUP
 ###############################################################
 
@@ -470,7 +516,9 @@ function Run-Cleanup {
     Log "SPO module found"
 
     Log "Connecting to SharePoint Online Admin..."
-    Connect-SPOService -Url $adminUrl
+    if (-not (Ensure-SPOConnection -Url $adminUrl -Interactive:$Interactive)) {
+        Fail "Could not connect to SharePoint Online. Verify admin URL, credentials/MFA, and consider running in the SharePoint Online Management Shell."
+    }
 
     Log "Retrieving all site collections..."
     $sites = Get-SPOSite -Limit All
@@ -591,7 +639,9 @@ function Run-Analyze {
     Log "SPO module found"
 
     Log "Connecting to SharePoint Online Admin..."
-    Connect-SPOService -Url $adminUrl
+    if (-not (Ensure-SPOConnection -Url $adminUrl -Interactive:$Interactive)) {
+        Fail "Could not connect to SharePoint Online. Verify admin URL, credentials/MFA, and consider running in the SharePoint Online Management Shell."
+    }
 
     Log "Retrieving all site collections..."
     $sites = Get-SPOSite -Limit All
